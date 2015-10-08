@@ -42,13 +42,13 @@ Flocking is used to ensure only one instance of this script runs at a time. NTP 
 `# Internal servers list`  
 `# Please ensure each server begins as the beginning of a new line`  
 `# Lines beginning with hash or space are treated as comment lines`  
-``
+
 `10.1.2.4`  
 `10.3.4.5`  
 `10.6.7.8`  
- ``
+
 `# Distribution layer 'VIP' addresses`  
 `192.168.1.2`  
 `192.168.3.4`  
 `192.168.5.6`
-`
+
