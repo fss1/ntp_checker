@@ -37,7 +37,7 @@ https://datatracker.ietf.org/doc/rfc5905/
 ### Operation 
 Flocking is used to ensure only one instance of this script runs at a time. NTP uses UTC - all times are in UTC. Log files will be deleted after 28 days, warning files will be renamed with a time stamp after 7 days. Acknowledged (date stamped) warning files exist forever.
 
-## Example internal_servers_list.txt  
+### Example internal_servers_list.txt  
 
 `# Internal servers list`  
 `# Please ensure each server begins as the beginning of a new line`  
