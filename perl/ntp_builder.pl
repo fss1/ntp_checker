@@ -4,7 +4,7 @@ use warnings;
 use Carp;
 use English qw(-no_match_vars);
 
-# fss1 ta liamg tod moc
+# fss1138 ta liamg tod moc
 # COPYRIGHT AND LICENSE
 # Copyright (C) 2015, fss1138.
 
@@ -19,7 +19,7 @@ use English qw(-no_match_vars);
 # This is a build script for Ubuntu 64 bit server 12.04/14.04/15.04
 # intended for hosting the ntp_checker script
 
-our $VERSION = '0.0.05';
+our $VERSION = '0.0.06';
 
 print << "GREETINGS";
    
@@ -95,6 +95,9 @@ system 'cpanm Mail::Mailer';
 print "\n Installing Net::NTP\n";
 system 'cpanm Net::NTP';
 
+print "\n Fetching rename cgi script\n";
+system 'wget https://raw.githubusercontent.com/fss1/ntp_checker/master/perl/rename.pl';
+
 sub old_apache {
 
   # For backward compatibility keep the old (Ubuntu 12) apache document root
@@ -156,6 +159,13 @@ print
 system 'crontab -l > cronaddition';
 system "echo '0 * * * * /root/ntp_checker.pl > /dev/null' >> cronaddition";
 system 'crontab cronaddition';
+
+print "\n setting permissions for rename cgi script \n";
+system 'chown www-data:www-data /usr/lib/cgi-bin/rename.pl';
+
+print "\n make rename script executable\n";
+system 'chmod 755 /usr/lib/cgi-bin/rename.pl';
+
 
 system "dpkg-reconfigure -f noninteractive tzdata";
 print
