@@ -19,7 +19,7 @@ use English qw(-no_match_vars);
 # This is a build script for Ubuntu 64 bit server 12.04/14.04/15.04
 # intended for hosting the ntp_checker script
 
-our $VERSION = '0.0.06';
+our $VERSION = '0.0.07';
 
 print << "GREETINGS";
    
@@ -96,7 +96,8 @@ print "\n Installing Net::NTP\n";
 system 'cpanm Net::NTP';
 
 print "\n Fetching rename cgi script\n";
-system 'wget https://raw.githubusercontent.com/fss1/ntp_checker/master/perl/rename.pl';
+# wget -O option allows destination path AND name to be specified
+system 'wget -O /usr/lib/cgi-bin/rename.pl https://raw.githubusercontent.com/fss1/ntp_checker/master/perl/rename.pl';
 
 sub old_apache {
 
