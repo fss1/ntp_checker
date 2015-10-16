@@ -956,7 +956,7 @@ sudo cpanm Net::NTP
 
 SERVER BUILD
 
-cech the build script but it is necessary to:
+Check the build script but it is necessary to:
 
 apt-get update
 apt-get upgrade
