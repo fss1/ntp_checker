@@ -55,15 +55,15 @@ The internal_ntp_servers_list.txt file must be present in the same path as the c
 `192.168.5.6`
 
 #### Log file definitions
-Server = Internal NTP server
-Ref = Reference clock (time source used by each server)
-St = Stratum
-Li = Leap Indicator, normally zero
-Precision = Clock quality measured as a power of two,
-E.g. precision=-16 is about 15 microseconds (2^-16 s)
-offset = offset of server compared to local clock
+Server = Internal NTP server  
+Ref = Reference clock (time source used by each server)  
+St = Stratum  
+Li = Leap Indicator, normally zero  
+Precision = Clock quality measured as a power of two,  
+E.g. precision=-16 is about 15 microseconds (2^-16 s)  
+offset = offset of server compared to local clock  
 
-For more information check the RFC 5905 (V4)
+For more information check the RFC 5905 (V4)  
 https://datatracker.ietf.org/doc/rfc5905/
 
 #### Suggested master time servers
