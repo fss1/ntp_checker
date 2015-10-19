@@ -16,14 +16,14 @@ use English qw(-no_match_vars);
 # useful, but without any warranty; without even the implied
 # warranty of merchantability or fitness for a particular purpose.
 
-# This is a build script for Ubuntu 64 bit server 12.04/14.04/15.04
-# intended for hosting the ntp_checker script
+# This is a setup script for Ubuntu 64 bit server 12.04/14.04/15.04
+# intended for hosting the ntp_checker.pl script
 
-our $VERSION = '0.0.07';
+our $VERSION = '0.0.08';
 
 print << "GREETINGS";
    
-      *** This is the ntp_checker build script ****
+      *** This is the ntp_checker server setup script ****
          
    This script $PROGRAM_NAME V$VERSION 
    sets up an environment for ntp_checker running on Ubuntu.
@@ -153,6 +153,19 @@ sleep 5;
 print "\n Restarting Apache\n";
 system 'apache2ctl restart';
 
+# download the checker script (to current directory)
+
+print "\n download the checker script\n";
+system 'wget https://raw.githubusercontent.com/fss1/ntp_checker/master/perl/ntp_checker.pl';
+
+print "\n make the checker script executable\n";
+system 'chmod 755 ntp_checker.pl';
+
+# download the example server list file (to current directory, needs to match dir of checker)
+
+print "\n download the checker script internal_ntp_servers_list.txt\n";
+system 'https://raw.githubusercontent.com/fss1/ntp_checker/master/internal_ntp_servers_list.txt';
+
 # edit crontab to provide hourly execution of the checker script
 print
 " Editing crontab, use crontab -e to change\n 0 * * * * /root/ntp_checker.pl > /dev/null \n if required \n";
@@ -164,11 +177,13 @@ system 'crontab cronaddition';
 print "\n setting permissions for rename cgi script \n";
 system 'chown www-data:www-data /usr/lib/cgi-bin/rename.pl';
 
-print "\n make rename script executable\n";
+print "\n making rename cgi script executable\n";
 system 'chmod 755 /usr/lib/cgi-bin/rename.pl';
 
+# Check/set server clock to UTC
+# 'dpkg-reconfigure -f noninteractive tzdata' did not work when called from script;
+# prompt to set this manually
 
-system "dpkg-reconfigure -f noninteractive tzdata";
 print
 "\n Change the time zone to UTC if this is not the current setting\n with:  dpkg-reconfigure tzdata \n";
 
@@ -178,10 +193,8 @@ exit 0;
 
 __END__
 
-Now add the rename script and
-chown www-data:www-data /usr/lib/cgi-bin/rename.pl
 
-ntp_check.pl has a build script ntp_check_builder.pl but also requires:
+ntp_check.pl requires:
 
 1.  internal_ntp_servers_list.txt
 a file containing a line be line list of IP/Hostnames to check.
@@ -191,11 +204,11 @@ If the server list file wont open or cannot be found the script will abort.
 a script to rename the warnings file and as a result of this 
 renaming, allows further emails to be sent on the next warning
 
+These should have been downloaded from github if using the build script.
 
-The build script will install and configure:
+The ntp_build script will install and configure:
 Apache2 configured to run cgi with a doc root of /var/www.
-crontab configured to run ntp_checker as required.  
-The ntp_check_builder.pl build script sets this to every hour.
+crontab configured to run ntp_checker every hour.  
 
 A point of note regarding cgi:
 hostname/cgi-bin/  >  Not Found then cgi is probably not
@@ -211,12 +224,7 @@ Enabling module cgid.
 To activate the new configuration, you need to run:
 service apache2 restart
 
-Note that html and css files are generated on the fly, when the check script runs.
-
-ntp_checker script has the following command line options:
--v for verbose, -h for help, -m for mail test
-Although a primative web page is generated, it is possible to
-simply run the check script at command line without Apache running.
+Note that html and css files are generated on the fly when the check script runs.
 
 For testing the checker script cleans up old files correctly,
 age the log files with touch, e.g.
