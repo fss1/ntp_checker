@@ -10,7 +10,9 @@ ntp2.npl.co.uk
 ptbtime3.ptb.de   
 The secondary server will only be used if the primary server is not responding.   
 
-If the difference in offsets is more than $offset_limit seconds, or a leap Indicator bit is set, or the server does not respond, a warning is logged.
+If the difference in offsets is more than $offset_limit seconds, or a leap Indicator bit is set, or the server does not respond, a warning is logged.  
+
+As a single source (usually NPL) is used for the comparison, a delayed response may result in an occasional warning if set too tight.  In practice .3 of a second seems a safe limit. 
 
 A new warning will create a warning log file and send an email alert. A warning condition exists while a current warning file is present.
 
