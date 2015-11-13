@@ -88,7 +88,7 @@ ptbtime1.ptb.de
 ptbtime2.ptb.de  
 ptbtime3.ptb.de  
 
-#### What can be monotored
+#### What can be monitored
 Net::NTP is used, so anything returned in the associative array based upon RFC1305 and RFC2030 is available.  A Data::Dumper example:  
 
     {
@@ -117,10 +117,16 @@ Net::NTP is used, so anything returned in the associative array based upon RFC13
 It would be nice to visualise the data.  InfluxDB + Grafana seem to be a nice match.
 ntp_checker above 0.0.37 will gain influxDB integration and will eventually become Timewatch.  
 
-Web interfaces:  
+Interfaces:  
 
 **InfuxDB**  
-http://localhost:8083/  
+http://localhost:8083/
+
+or the command line:  
+# /opt/influxdb/influx  
+Connected to http://localhost:8086 version  
+InfluxDB shell 0.9.4.2  
+>  
   
 **Grafana**  
 http://localhost:3000/login  
@@ -136,5 +142,8 @@ SHOW SERIES FROM ntp_offset WHERE server = '192.168.12.34'
 SHOW TAG KEYS FROM ntp_offset  
 select \* from ntp_offset where server =~ /10.0.0.\*/  
 select \* from /.\*/ limit 5  
+
+For plotting purposes, the external reference servers become a single plot with the same name defined in  
+$ref_server
 
 
