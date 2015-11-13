@@ -90,28 +90,28 @@ ptbtime3.ptb.de
 
 #### What can be monotored
 Net::NTP is used, so anything returned in the associative array based upon RFC1305 and RFC2030 is available.  A Data::Dumper example:  
-`
-$VAR1 = {
-          'Key Identifier' => '',
-          'Root Delay' => '0.0635833740234375',
-          'Reference Clock Identifier' => '168.192.123.45',
-          'Reference Timestamp' => '1447426807.23475',
-          'Poll Interval' => '0.0000',
-          'Receive Timestamp' => '1447426995.51275',
-          'Offset' => '-0.0133742094039917',
-          'Root Dispersion' => '0.0000',
-          'Destination Timestamp' => '1447426995.52267',
-          'Originate Timestamp' => '1447426995.90532',
-          'Precision' => -6,
-          'Stratum' => 4,
-          'Leap Indicator' => 0,
-          'Mode' => 4,
-          'Delay' => '0.00690',
-          'Message Digest' => '',
-          'Transmit Timestamp' => '1447426995.51275',
-          'Version Number' => 3
-        };
-`
+
+    {
+    'Key Identifier' => '',
+    'Root Delay' => '0.0635833740234375',
+    'Reference Clock Identifier' => '168.192.123.45',
+    'Reference Timestamp' => '1447426807.23475',
+    'Poll Interval' => '0.0000',
+    'Receive Timestamp' => '1447426995.51275',
+    'Offset' => '-0.0133742094039917',
+    'Root Dispersion' => '0.0000',
+    'Destination Timestamp' => '1447426995.52267',
+    'Originate Timestamp' => '1447426995.90532',
+    'Precision' => -6,
+    'Stratum' => 4,
+    'Leap Indicator' => 0,
+    'Mode' => 4,
+    'Delay' => '0.00690',
+    'Message Digest' => '',
+    'Transmit Timestamp' => '1447426995.51275',
+    'Version Number' => 3
+    };
+
 
 ## Timewatch
 It would be nice to visualise the data.  InfluxDB + Grafana seem to be a nice match.
@@ -119,10 +119,10 @@ ntp_checker above 0.0.37 will gain influxDB integration and will eventually beco
 
 Web interfaces:  
 
-InfuxDB  
+**InfuxDB**  
 http://localhost:8083/  
   
-Grafana  
+**Grafana**  
 http://localhost:3000/login  
 [default login admin,admin]  
 
@@ -134,7 +134,7 @@ CREATE DATABASE timewatch
 DROP DATABASE timewatch  
 SHOW SERIES FROM ntp_offset WHERE server = '192.168.12.34'  
 SHOW TAG KEYS FROM ntp_offset  
-select * from ntp_offset where server =~ /10.0.0.*/  
-select * from /.*/ limit 5  
+select \* from ntp_offset where server =~ /10.0.0.\*/  
+select \* from /.\*/ limit 5  
 
 
