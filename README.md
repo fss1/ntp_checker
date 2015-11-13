@@ -123,7 +123,7 @@ Interfaces:
 http://localhost:8083/
 
 or the command line:  
-# /opt/influxdb/influx  
+\# /opt/influxdb/influx  
 Connected to http://localhost:8086 version  
 InfluxDB shell 0.9.4.2  
 >  
@@ -143,7 +143,6 @@ SHOW TAG KEYS FROM ntp_offset
 select \* from ntp_offset where server =~ /10.0.0.\*/  
 select \* from /.\*/ limit 5  
 
-For plotting purposes, the external reference servers become a single plot with the same name defined in  
-$ref_server
+For plotting purposes, the external reference servers become a single plot with the same name defined in $ref_server
 
 
