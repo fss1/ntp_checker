@@ -142,7 +142,16 @@ SHOW SERIES FROM ntp_offset WHERE server = '192.168.12.34'
 SHOW TAG KEYS FROM ntp_offset  
 select \* from ntp_offset where server =~ /10.0.0.\*/  
 select \* from /.\*/ limit 5  
+select value from ntp_offset where time > now() - 1h limit 100  
+
+The select syntax takes the usual now() with d for day w for week.  
 
 For plotting purposes, the external reference servers become a single plot with the same name defined in $ref_server
 
+### ntp offset for Singlstat
 
+Within Grafana > Singlestat > Options it is possible to define colours to value ranges and a value to text mapping. 
+The ntp_offset is made always positive and added to the timewatch database as a separate row, poffset. 
+Suggested thresholds are set as 0,0.3,0.5 Colors as Green, Orange and Red.  
+If no response from the server is found then the offset is set to 666 (firmly Red).  
+The value 666 is mapped to display N/A in the Singlestat display.
