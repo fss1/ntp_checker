@@ -137,6 +137,7 @@ SHOW TAG KEYS FROM ntp_offset
 select \* from ntp_offset where server =~ /10.0.0.\*/   
 select \* from /.\*/ limit 5   
 select value from ntp_offset where time > now() - 1h limit 100   
+SELECT last(value) FROM poffset WHERE time > now() - 1h and server =~ /ref_server/  
    
 The select syntax takes the usual now() with d for day w for week.  
     
@@ -152,7 +153,7 @@ The script will use curl to make http inserts to InfluxDB so curl must be presen
 In Grafana, edit the Data Source to be Type InfluxDB 0.9.x, url http://localhost:8086, influxDB Details Database, timewatch etc.   
 ADD ROW -> Add Panel -> Graph  with multiple lines such as 'SELECT mean(value) FROM ntp_offset WHERE server=ip_of_server GROUP BY time($interval) server 
 
-### NTP offset for Singlestat
+#### NTP offset for Singlestat
 
 Within Grafana -> Add Panel -> Single stat -> Options it is possible to define colours to value ranges and a value to text mapping. 
 Use last value to provide a current condition.  SELECT last(value) FROME poffset WHERE server = ref_server GROUP BY time($interval) server  
@@ -162,5 +163,5 @@ Exception cases exist that can be identified by using text mapping for specific 
 If no response from the server is found then the offset is set to 666.
 If the leap indicator bit is set then the offset is set to 667.  
 The value 666 is mapped to display 'Not Available'  
-The value 667 is mapped to dispaly 'LI Set'  
+The value 667 is mapped to display 'LI Set'  
 
