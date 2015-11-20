@@ -89,7 +89,7 @@ ptbtime2.ptb.de
 ptbtime3.ptb.de  
 
 #### What can be monitored
-Net::NTP is used, so anything returned in the associative array based upon RFC1305 and RFC2030 is available.  A Data::Dumper example:  
+**Net::NTP** is used, so anything returned in the associative array based upon RFC1305 and RFC2030 is available.  A Data::Dumper example:  
 
     {
     'Key Identifier' => '',
@@ -111,6 +111,11 @@ Net::NTP is used, so anything returned in the associative array based upon RFC13
     'Transmit Timestamp' => '1447426995.51275',
     'Version Number' => 3
     };
+
+**Net::NTP** calculates the _offset_ of an NTP Packet (from B), returning the offset to local (A) according to its xmttime(T1) and rectime(T4),   
+theta = T(B) - T(A) = 1/2 * [(T2-T1) + (T3-T4)]  
+**Net::NTP** returns the _delay_ from the sender (B) of $packet given known local xmttime(T1) and rectime(T4)   
+delta = T(ABA) = (T4-T1) - (T3-T2) 
 
 
 ## Timewatch
