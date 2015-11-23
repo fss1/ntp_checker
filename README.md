@@ -35,7 +35,7 @@ Create an instance of Ubuntu 14.04 server in your favourite VM.  From /root, dow
 
 `dpkg-reconfigure -f noninteractive tzdata` needs too be run manually as part of the build to set/check the time zone.  A prompt is generated at the end of the build script to set the time zone (should be UTC).  If InfuxDB and Grafan are required also run the timewatch_builder script:  
 
-`wget https://github.com/fss1/ntp_checker/blob/master/perl/timewatch_builder.pl`
+`wget https://github.com/fss1/ntp_checker/blob/master/perl/timewatch_builder.pl`  
 `perl timewatch_builder.pl`
    
 If using a dedicated VM specific for ntp_checker, install to /root, otherwise change the paths/crontab as required.  
