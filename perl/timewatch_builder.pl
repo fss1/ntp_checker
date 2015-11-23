@@ -3,6 +3,7 @@ use strict;
 use warnings;
 use Carp;
 use English qw(-no_match_vars);
+use Sys::Hostname;
 
 # fss1138 ta liamg tod moc
 # COPYRIGHT AND LICENSE
@@ -67,12 +68,13 @@ system 'service grafana-server start';
 print "\n Enable Grafana from startup \n";
 system 'update-rc.d grafana-server defaults 95 10';
 
+my $hostname = hostname();
 
 print << "THE_END";
 
-Influx web Gui interface on http://hostname:8083/
+Influx web Gui interface on http://$hostname:8083/
 
-Grafana web gui interface on http://hostname:3000/
+Grafana web gui interface on http://$hostname:3000/
 
 influx daemon
 /opt/influxdb/influxd
