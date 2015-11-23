@@ -19,7 +19,7 @@ use English qw(-no_match_vars);
 # This is a setup script for Ubuntu 64 bit server 12.04/14.04/15.04
 # intended for hosting the ntp_checker.pl script
 
-our $VERSION = '0.0.08';
+our $VERSION = '0.0.09';
 
 print << "GREETINGS";
    
@@ -63,6 +63,10 @@ system 'apt-get install apache2';
 
 print "\n Installing PerlTidy\n";
 system 'apt-get install perltidy';
+
+print "\n Installing vim\n";
+system 'apt-get install vim';
+
 
 # create directories
 
@@ -164,7 +168,12 @@ system 'chmod 755 ntp_checker.pl';
 # download the example server list file (to current directory, needs to match dir of checker)
 
 print "\n download the checker script internal_ntp_servers_list.txt\n";
-system 'https://raw.githubusercontent.com/fss1/ntp_checker/master/internal_ntp_servers_list.txt';
+system 'wget https://raw.githubusercontent.com/fss1/ntp_checker/master/internal_ntp_servers_list.txt';
+
+# download the timewatch_build script (to add Influx and Grafana)
+print "\n download the timewatch_builder script to add\n";
+system 'wget https://github.com/fss1/ntp_checker/blob/master/perl/timewatch_builder.pl';
+
 
 # edit crontab to provide hourly execution of the checker script
 print
@@ -186,6 +195,9 @@ system 'chmod 755 /usr/lib/cgi-bin/rename.pl';
 
 print
 "\n Change the time zone to UTC if this is not the current setting\n with:  dpkg-reconfigure tzdata \n";
+
+print
+"\n Run the timewatch_builder.pl script to add InfluxDB and Grafana\n";
 
 print "\n End of script \n";
 
