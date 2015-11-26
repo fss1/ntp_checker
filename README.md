@@ -1,7 +1,7 @@
 
 # NTP CHECKER
 
-ntp_checker compares internal NTP sources in a .txt file list, with the National Physical Laboratory and warns if the offset between NPL and local servers exceeds a definable (fraction of) seconds. If NPL is not available, Physikalisch-Technische Bundesanstalt (PTB) is used. A log file is created each time the script runs. Logs older than 28 days are automatically deleted. 
+ntp_checker compares internal NTP sources in a .txt file list, with the National Physical Laboratory and warns if the offset between NPL and local servers exceeds a definable (fraction of) seconds. If NPL is not available, Physikalisch-Technische Bundesanstalt (PTB) is used. A log file is created each time the script runs. Logs older than 28 days are automatically deleted. ntp_checker has a build script ntp_builder.pl but evolved to use InfluxDB and Grafana.  At this point it became known as Timewatch.  Additional components are installed with the timewatch_builder.pl script. 
 
 ## How it works
 
@@ -174,7 +174,7 @@ If the leap indicator bit is set then the offset is set to 667.
 The value 666 is mapped to display 'Not Available'  
 The value 667 is mapped to display 'LI Set'  
 
-#### Grafan configuration
+#### Grafana configuration
 
 This is down to personal taste; a few suggestions:  
 
