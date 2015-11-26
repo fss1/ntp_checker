@@ -180,11 +180,11 @@ This is down to personal taste; a few suggestions:
 
 + Row title allows the graph to be collapsed but looks cluttered if a graph title is also used.  Graph title can be blank (but remains as a hover over link to access the edit menu) 
 + Settings (the cog) -> Rows, allows title to be added. Settings -> Links are also very useful
-+ The period configuration (top left) allows auto refresh to be defined (1 min seems sensible for this application) change from default is off
++ The period configuration (top left) allows auto refresh to be defined (1 min seems sensible) change from default of off
 + For an offset graph, Y left set to 0.05 max and -0.05 min works well
 + Row pop out menu, Set Row height to 350px
 + Display Styles, Line Options with Line fill 0, Line Width 2, Null point mode connected; Axis and Grids, show legend right
 + Add a text row as a help menu.  As above, use the row title and leave the General options title blank
 + When done, Settings -> Export to download the configuration
-For single statistics, span 1, height 0 works provided the pre and post description is short and provides a minimal area.
++ For single statistics, span 1, height 0 works provided the pre and post description is short and provides a minimal area.
 
