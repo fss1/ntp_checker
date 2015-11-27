@@ -172,7 +172,12 @@ Exception cases exist that can be identified by using text mapping for specific 
 If no response from the server is found then the offset is set to 666.
 If the leap indicator bit is set then the offset is set to 667.  
 The value 666 is mapped to display 'Not Available'  
-The value 667 is mapped to display 'LI Set'  
+The value 667 is mapped to display 'LI Set'   
+
+#### Max Positive V Negative Offset 
+
+Another graph of max positive and negative offset was considered.  Additional entries were made for in the database for maxpos and maxneg offset.  
+This is taken from the internal server pool and exclues external references.  
 
 #### Grafana configuration
 
