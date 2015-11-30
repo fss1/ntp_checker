@@ -177,7 +177,7 @@ The value 667 is mapped to display 'LI Set'
 
 #### Max Positive V Negative Offset 
 
-Another graph of max positive and negative offset was considered.  Additional entries were made for in the database for measurement 'maxoffset' to provide maxpos_server and maxneg_server offset values each time the script is run.  
+Another graph of max positive and negative offset was considered.  Additional entries were made in the database for measurement 'maxoffset' to provide 'maxpos_server' and 'maxneg_server' offset values each time the script is run.  
 This is taken from the internal server pool and exclues external references.  
 
 #### Grafana configuration
