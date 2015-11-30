@@ -137,7 +137,7 @@ Connected to http://localhost:8086 version
 InfluxDB shell 0.9.4.2  
 >  
  
-A few example queries:  
+A few influx example queries:  
     
 CREATE DATABASE timewatch   
 DROP DATABASE timewatch   
@@ -147,8 +147,9 @@ select \* from ntp_offset where server =~ /10.0.0.\*/
 select \* from /.\*/ limit 5   
 select value from ntp_offset where time > now() - 1h limit 100   
 SELECT last(value) FROM poffset WHERE time > now() - 1h and server =~ /ref_server/  
-   
 The select syntax takes the usual now() with d for day w for week.  
+
+CREATE USER god WITH PASSWORD 'keepcalmandcodequietly' WITH ALL PRIVILEGES   
     
 For plotting purposes, the external reference servers become a single plot with the same name defined in $ref_server.  
 
@@ -176,7 +177,7 @@ The value 667 is mapped to display 'LI Set'
 
 #### Max Positive V Negative Offset 
 
-Another graph of max positive and negative offset was considered.  Additional entries were made for in the database for maxpos and maxneg offset.  
+Another graph of max positive and negative offset was considered.  Additional entries were made for in the database for measurement 'maxoffset' to provide maxpos_server and maxneg_server offset values each time the script is run.  
 This is taken from the internal server pool and exclues external references.  
 
 #### Grafana configuration
