@@ -19,7 +19,7 @@ use English qw(-no_match_vars);
 # This is a setup script for Ubuntu 64 bit server 12.04/14.04/15.04
 # intended for hosting the ntp_checker.pl script
 
-our $VERSION = '0.0.09';
+our $VERSION = '0.0.10';
 
 print << "GREETINGS";
    
@@ -172,8 +172,7 @@ system 'wget https://raw.githubusercontent.com/fss1/ntp_checker/master/internal_
 
 # download the timewatch_build script (to add Influx and Grafana)
 print "\n download the timewatch_builder script to add\n";
-system 'wget https://github.com/fss1/ntp_checker/blob/master/perl/timewatch_builder.pl';
-
+system 'wget https://raw.githubusercontent.com/fss1/ntp_checker/master/perl/timewatch_builder.pl';
 
 # edit crontab to provide hourly execution of the checker script
 print
