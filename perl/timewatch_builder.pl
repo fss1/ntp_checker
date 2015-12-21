@@ -21,7 +21,13 @@ use Sys::Hostname;
 # intended for hosting the ntp_checker.pl which evolved to support 
 # Influx/Grafana and became timewatch.pl
 
-our $VERSION = '0.0.01';
+our $VERSION = '0.0.03';
+
+# influxdb download
+my $influxdb_latest =  'https://s3.amazonaws.com/influxdb/influxdb_0.9.6.1_amd64.deb';
+
+# grafana download
+my $grafana_latest = 'https://grafanarel.s3.amazonaws.com/builds/grafana_2.6.0_amd64.deb';
 
 print << "GREETINGS";
 
@@ -36,13 +42,17 @@ GREETINGS
 
 print "\n Create InfluxDB download directory and download \n";
 system 'mkdir /root/influxdb_download';
-system 'wget -O /root/influxdb_download/influxdb.deb https://s3.amazonaws.com/influxdb/influxdb_0.9.4.2_amd64.deb';
+system "wget -O /root/influxdb_download/influxdb.deb $influxdb_latest";
 
 print "\n Installin Influx package \n";
 system 'dpkg -i /root/influxdb_download/influxdb.deb';
 
 print "\n Start InfluxDB \n";
 system '/etc/init.d/influxdb start';
+
+# wait for db to start before creating entry
+# see if this fixes curl: (7) Failed to connect to localhost port 8086: Connection refused
+sleep 5;
 
 # Create the database 'timewatch'
 # curl -G 'http://localhost:8086/query' --data-urlencode "q=CREATE DATABASE timewatch"
@@ -54,12 +64,12 @@ system(
 
 print "\n Create Grafana download directory and download \n";
 system 'mkdir /root/grafana_download';
-system 'wget -O /root/grafana_download/grfana.deb wget https://grafanarel.s3.amazonaws.com/builds/grafana_2.1.3_amd64.deb';
+system "wget -O /root/grafana_download/grfana.deb $grafana_latest";
 
 print "\n Add user libfontconfig required by Grafana \n";
 system 'apt-get install -y adduser libfontconfig';
 
-print "\n Install Grafan package \n";i
+print "\n Install Grafan package \n";
 system 'dpkg -i /root/grafana_download/grfana.deb';
 
 print "\n Start Grafana \n";
@@ -68,22 +78,31 @@ system 'service grafana-server start';
 print "\n Enable Grafana from startup \n";
 system 'update-rc.d grafana-server defaults 95 10';
 
+print "\n Installing sysv-rc-conf for easy chekcing of run levles \n";
+system 'apt-get install sysv-rc-conf';
+
 my $hostname = hostname();
 
 print << "THE_END";
 
-Influx web Gui interface on http://$hostname:8083/
+Influx web GUI: http://$hostname:8083/
 
-Grafana web gui interface on http://$hostname:3000/
+Grafana web GUI: http://$hostname:3000/
 
 influx daemon
-/opt/influxdb/influxd
+/usr/bin/influxd
 
 influx client
-/opt/influxdb/influx
+/usr/bin/influx
 
-now try SHOW DATABASES, and timewatch should be available
+Confirm run levels and services for influxdb and grafana-serv  with sysv-rc-conf --list
+from the influx client, try SHOW DATABASES, and timewatch should be available.
+Once the script has run, SHOW MEASUREMENTS should become populated (ntp_offset, maxoffset, poffset)
+Optionally, create a retention policy, 
+CREATE RETENTION POLICY timewatch_2years ON timewatch DURATION 104w REPLICATION 1
+Confimr retention is active with, 
+SHOW RETENTION POLICIES ON "timewatch" (there is always a default policy) 
 
-Thhats is, Share and Enjoy
+Thats all folks, Share and Enjoy.
 
 THE_END
