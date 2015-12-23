@@ -125,6 +125,7 @@ delta = T(ABA) = (T4-T1) - (T3-T2)
 It would be nice to visualise the data.  InfluxDB + Grafana seem to be a nice match.
 ntp_checker above 0.0.37 will gained influxDB integration to become Timewatch.  
 An additional build script timewatch_builder.pl, will add InfluxDB and Grafan and the database 'timewatch'.  
+Graphs look better over an interval of days if data points are every 15 mins. A crontab entry for timewatch has been added for this (the ntp_checker was hourly).
 
 Interfaces:  
 
@@ -137,7 +138,7 @@ Connected to http://localhost:8086 version
 InfluxDB shell 0.9.4.2  
 >  
  
-A few influx example queries:  
+A few influx example queries and settings:  
     
 CREATE DATABASE timewatch   
 DROP DATABASE timewatch   
@@ -150,6 +151,11 @@ SELECT last(value) FROM poffset WHERE time > now() - 1h and server =~ /ref_serve
 The select syntax takes the usual now() with d for day w for week.  
 
 CREATE USER god WITH PASSWORD 'keepcalmandcodequietly' WITH ALL PRIVILEGES   
+Optionally, create a retention policy   
+CREATE RETENTION POLICY timewatch_2years ON timewatch DURATION 104w REPLICATION 1   
+Confimr retention is active with   
+SHOW RETENTION POLICIES ON "timewatch" (there is always a default policy)  
+
     
 For plotting purposes, the external reference servers become a single plot with the same name defined in $ref_server.  
 
@@ -192,5 +198,13 @@ This is down to personal taste; a few suggestions:
 + Display Styles, Line Options with Line fill 0, Line Width 2, Null point mode connected; Axis and Grids, show legend right
 + Add a text row as a help menu.  As above, use the row title and leave the General options title blank
 + When done, Settings -> Export to download the configuration
-+ For single statistics, span 1, height 0 works provided the pre and post description is short and provides a minimal area.
++ For single statistics, span 1, height 0 works provided the pre and post description is short and provides a minimal area
++ Metrics now allow 'ALIAS BY' instead of using the tag value to label the server
++ Chnage admin password and create a view only user.  Grafana Admin -> Global Users -> Create User (and Edit admin account)
+
+#### Server administration
+The timewatch script is running on a VM with only 1G of RAM.  The build script adds sar but this is not enabled.  
+edit /etc/cron.d/sysstat to enable, sar -r to check memory used   
+service sysstat start, service sysstat status, to check sysstat is running.   
+
 
