@@ -18,10 +18,10 @@ use Sys::Hostname;
 # warranty of merchantability or fitness for a particular purpose.
 
 # This script adds InfluxDB and Grafana to Ubuntu 64 bit server 12.04/14.04/15.04
-# intended for hosting the ntp_checker.pl which evolved to support 
+# intended for hosting  timewatch.pl script which evolved from nto_checker to support 
 # Influx/Grafana and became timewatch.pl
 
-our $VERSION = '0.0.03';
+our $VERSION = '0.0.04';
 
 # influxdb download
 my $influxdb_latest =  'https://s3.amazonaws.com/influxdb/influxdb_0.9.6.1_amd64.deb';
@@ -81,6 +81,17 @@ system 'update-rc.d grafana-server defaults 95 10';
 print "\n Installing sysv-rc-conf for easy chekcing of run levles \n";
 system 'apt-get install sysv-rc-conf';
 
+print "\n Installing sar to check system usage (sysstat package) \n";
+system 'apt-get install sysstat';
+
+# edit crontab to provide execution of the timewatch script every 15 minutes
+print
+" Editing crontab, use crontab -e to change\n */15 * * * * /root/timewatch.pl > /dev/null \n if required \n";
+
+system 'crontab -l > cron_for_timewatch';
+system "echo '*/10 * * * * /root/timewatch.pl > /dev/null' >> cron_for_timewatch";
+system 'crontab cron_for_timewatch';
+
 my $hostname = hostname();
 
 print << "THE_END";
@@ -102,6 +113,11 @@ Optionally, create a retention policy,
 CREATE RETENTION POLICY timewatch_2years ON timewatch DURATION 104w REPLICATION 1
 Confimr retention is active with, 
 SHOW RETENTION POLICIES ON "timewatch" (there is always a default policy) 
+
+Check memory & system use with sar.  This was installed but needs to be enabled:
+edit /etc/cron.d/sysstat to enable, sar -r to check memory used
+service sysstat start, service sysstat status to check
+
 
 Thats all folks, Share and Enjoy.
 
