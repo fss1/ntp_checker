@@ -163,9 +163,8 @@ SHOW RETENTION POLICIES ON "timewatch" (there is always a default policy)
 Paths vary between versions, check within /etc/init.d/influxdb      
 The backup (snapshot) option was found not to work and impacted the database process.  It was necessary to add the snapshot line into the conf file:  
 `[snapshot]`   
-`enabled = true # Disabled by default if not set.`   
-`    
-
+`enabled = true # Disabled by default if not set.`  
+    
 For plotting purposes, the external reference servers become a single plot with the same name defined in $ref_server.  
 
  
@@ -193,7 +192,7 @@ The value 667 is mapped to display 'LI Set'
 #### Max Positive V Negative Offset 
 
 Another graph of max positive and negative offset was considered.  Additional entries were made in the database for measurement 'maxoffset' to provide 'maxpos_server' and 'maxneg_server' offset values each time the script is run.  
-This is taken from the internal server pool and exclues external references.  
+This is taken from the internal server pool and excludes external references.  
 
 #### Grafana configuration
 
