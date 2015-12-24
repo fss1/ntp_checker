@@ -151,12 +151,19 @@ SELECT last(value) FROM poffset WHERE time > now() - 1h and server =~ /ref_serve
 The select syntax takes the usual now() with d for day w for week.  
 
 CREATE USER god WITH PASSWORD 'keepcalmandcodequietly' WITH ALL PRIVILEGES   
+CREATE USER admin WITH PASSWORD 'admin' WITH ALL PRIVILEGES   
+SHOW USERS   
 Optionally, create a retention policy   
 CREATE RETENTION POLICY timewatch_2years ON timewatch DURATION 104w REPLICATION 1   
 Confimr retention is active with   
 SHOW RETENTION POLICIES ON "timewatch" (there is always a default policy)  
 
-    
+Paths vary between versions, check within /etc/init.d/influxdb      
+The backup (snapshot) option was found not to work and impacted the database process.  It was necessary to add the snapshot line into the conf file:  
+`
+[snapshot]
+enabled = true # Disabled by default if not set. 
+`    
 For plotting purposes, the external reference servers become a single plot with the same name defined in $ref_server.  
 
  
