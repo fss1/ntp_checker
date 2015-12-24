@@ -142,6 +142,8 @@ A few influx example queries and settings:
     
 CREATE DATABASE timewatch   
 DROP DATABASE timewatch   
+SHOW MEASUREMENTS   
+SHOW SERIES   
 SHOW SERIES FROM ntp_offset WHERE server = '192.168.12.34'   
 SHOW TAG KEYS FROM ntp_offset   
 select \* from ntp_offset where server =~ /10.0.0.\*/   
@@ -161,9 +163,10 @@ SHOW RETENTION POLICIES ON "timewatch" (there is always a default policy)
 Paths vary between versions, check within /etc/init.d/influxdb      
 The backup (snapshot) option was found not to work and impacted the database process.  It was necessary to add the snapshot line into the conf file:  
 `
-[snapshot]
+[snapshot]   
 enabled = true # Disabled by default if not set. 
 `    
+
 For plotting purposes, the external reference servers become a single plot with the same name defined in $ref_server.  
 
  
