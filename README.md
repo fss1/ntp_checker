@@ -52,6 +52,8 @@ $offset_limit
 The file containing lists of internal servers (one per line) is $ntplist, internal_ntp_servers_list.txt is the default name.  
 This file must exist and be in the same path as the script.  ntp_checker needs to be run at least once to create the home page.  
 
+As the ntp_builder adds git it is now possible to git pull the project.  This was intended to run from root on a VM only running these scripts.  If continuing with 'Timewatch' copy the timewatch scripts into root and make them executable.  Edit the crontab to remove the original ntp_checker entry once timewatch has been proven.  
+
 #### Example internal_ntp_servers_list.txt  
 The internal_ntp_servers_list.txt file must be present in the same path as the checking script for the script to run.  IP or hostnames can be used - there is no validity checking of either.  A copy of this list is made each time the script runs making it visible as a link in the web page, so take care with the comments.  These may be visible to others.
 
@@ -174,7 +176,8 @@ http://localhost:3000/login
 
 The script will use curl to make http inserts to InfluxDB so curl must be present.  
 
-In Grafana, edit the Data Source to be Type InfluxDB 0.9.x, url http://localhost:8086, influxDB Details Database, timewatch etc.   
+In Grafana, edit the Data Source to be Type InfluxDB 0.9.x; as this is running on the same host, Http settings are url http://localhost:8086  
+Data source name is used by the dashboards to idenify the database, effectively an alias. For example, Name: influxdb_timewatch, Database  timewatch, User admin.     
 ADD ROW -> Add Panel -> Graph  with multiple lines such as 'SELECT mean(value) FROM ntp_offset WHERE server=ip_of_server GROUP BY time($interval) server 
 
 #### NTP offset for Singlestat

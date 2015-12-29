@@ -26,7 +26,7 @@ use Mail::Mailer;                     # For smtp
 # can redistribute it and/or modify it
 # under the same terms as Perl 5.14.0.
 
-our $VERSION = '0.0.46';
+our $VERSION = '0.0.49';
 
 # *** SCRIPT TO POLL INTERNAL NTP SOURCES, CHECK RETURNED OFFSET (AGAINST NPL) AND LEAP INDICATOR ***
 # *** WARN IF ANY SOURCE IS OUTSIDE OFFSET LIMIT, UNAVAILABLE OR HAS THE LI SET ***
@@ -123,7 +123,7 @@ my $warning = 0;
 # variable to hold server list as scalar used by ntpdate
 my $server_list;
 
-# variable to hold the reference offset
+# variable to hold the reference offset from external server used for absolute difference comparisons
 my $ref_offset = '0';
 
 # variable to hold ntp packet responses
@@ -393,7 +393,7 @@ my $help = << "HELP";
        Li = Leap Indicator, normally zero
        Precision = Clock quality measured as a power of two,  
        E.g. precision=-16 is about 15 microseconds (2^-16 s)
-       offset = offset of server compared to local clock 
+       Offset = offset of server compared to local clock 
        For more information check the RFC 5905 (V4)
        https://datatracker.ietf.org/doc/rfc5905/ 
        
@@ -759,19 +759,22 @@ foreach (@servers) {
             $warning++;
         }
 
-        my $offset_diff = ( $response{Offset} - $ref_offset );
-        if ( $offset_diff < 0 ) {
-            $offset_diff = $offset_diff * -1;
-        }    # Always make diff positive
-        if ( $offset_diff > $offset_limit ) {
+       # For comparison with the limit, the offset difference is made positive by taking the absolute value
+        my $abs_diff = 0;
+       # calcutale absolute (always positive difference) between offset response and reference offset
+       $abs_diff = abs( $response{Offset} - $ref_offset );
+
+
+# print "\n ref offset is: $ref_offset, response is $response{Offset}, absolute difference is $abs_diff\n";
+        if ( $abs_diff > $offset_limit ) {
 
             print
-"  *** WARNING offset difference for $server is $offset_diff and > $offset_limit *** \n";
+"  *** WARNING absolute offset difference for $server from external ref is $abs_diff and > $offset_limit limit setting *** \n";
             log_append(
-"  *** WARNING offset difference for $server is $offset_diff and > $offset_limit ***\n"
+"  *** WARNING absolute offset difference for $server from external ref is $abs_diff and > $offset_limit limit setting ***\n"
             );
             warn_append(
-"$runtime[0] $runtime[1] offset difference for $server is $offset_diff and > $offset_limit ***\n"
+"$runtime[0] $runtime[1] absolute offset difference for $server from external ref is $abs_diff and >  $offset_limit limit setting ***\n"
             );
             $warning++;
         }
@@ -910,7 +913,7 @@ sub create_index {
         <header>
         <h1>How it works</h1>
         </header>
-        <p>This script runs every hour.  Normally there should be no warnings.  If a warning event is detected, a warnings only log is created &amp appended to on each successive run.  Servers used for offset comparison are:
+        <p>This script runs every 15 minutes.  Normally there should be no warnings.  If a warning event is detected, a warnings only log is created &amp appended to on each successive run.  Servers used for offset comparison are:
             <br>EXTERNALREF1
             <br>EXTERNALREF2
             <br>The secondary server will only be used if the primary server is not responding.</p>
@@ -922,9 +925,14 @@ sub create_index {
             <p class="next-to-aside">
             A new warning will create a warning log file and send an email alert. A warning condition exists while a current warning file is present.<br>
             No further emails are sent for new warnings; these are appended to the current warning log.<br>
-            The warning file is automatically renamed with a date stamp if older than 7 days. Acknowledging the warning date stamps the file name. Once date stamped, the warning file is effectively archived.<br><br>
-            <mark>This page will not be updated until the script next runs<br></mark>
-                </p>
+            The warning file is automatically renamed with a date stamp if older than 7 days. Acknowledging the warning date stamps the file name. Once date stamped, the warning file is effectively archived.
+            <br>For a graphical view, log into Grafana (port 3000) with user and password 'timewatch' 
+            </p>
+                <form> <p class="next-to-aside">
+	        <input TYPE="button" VALUE="Graphical View"
+	        onclick="window.open('http://HOST:3000','_blank')"> </p>
+                </form>
+            <p class="next-to-aside"><br><mark>This static page and will not be updated until the next run</mark> </p>
                 <aside>
                 <p>
                 Clicking 'Acknowledge Warning' archives the current warning file and enables further email alerts</p>
@@ -1082,6 +1090,7 @@ $index_content =~ s/EXTERNALREF2/$external_ref2/;
 $index_content =~ s/OFFSETLIMIT/$offset_limit/;
 $index_content =~ s/RUNTIME0/$runtime[0]/;
 $index_content =~ s/RUNTIME1/$runtime[1]/;
+$index_content =~ s/HOST/$host/;
 
 # write the HTMLINDEX content to the $index file
 open my $INDEX, '>', $index
