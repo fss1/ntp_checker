@@ -208,7 +208,7 @@ This is down to personal taste; a few suggestions:
 + When done, Settings -> Export to download the configuration
 + For single statistics, span 1, height 0 works provided the pre and post description is short and provides a minimal area
 + Metrics now allow 'ALIAS BY' instead of using the tag value to label the server
-+ Chnage admin password and create a view only user.  Grafana Admin -> Global Users -> Create User (and Edit admin account)
++ Change admin password and create a view only user, timewatch.  Grafana Admin -> Global Users -> Create User (and Edit admin account)
 
 #### Server administration
 The timewatch script is running on a VM with only 1G of RAM.  The build script adds sar but this is not enabled.  
