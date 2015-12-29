@@ -21,7 +21,7 @@ use Sys::Hostname;
 # intended for hosting  timewatch.pl script which evolved from nto_checker to support 
 # Influx/Grafana and became timewatch.pl
 
-our $VERSION = '0.0.04';
+our $VERSION = '0.0.05';
 
 # influxdb download
 my $influxdb_latest =  'https://s3.amazonaws.com/influxdb/influxdb_0.9.6.1_amd64.deb';
@@ -89,7 +89,7 @@ print
 " Editing crontab, use crontab -e to change\n */15 * * * * /root/timewatch.pl > /dev/null \n if required \n";
 
 system 'crontab -l > cron_for_timewatch';
-system "echo '*/10 * * * * /root/timewatch.pl > /dev/null' >> cron_for_timewatch";
+system "echo '*/15 * * * * /root/timewatch.pl > /dev/null' >> cron_for_timewatch";
 system 'crontab cron_for_timewatch';
 
 my $hostname = hostname();
