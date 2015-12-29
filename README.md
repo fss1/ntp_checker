@@ -137,7 +137,7 @@ http://localhost:8083/
 or the command line:  
 \# /opt/influxdb/influx  
 Connected to http://localhost:8086 version  
-InfluxDB shell 0.9.4.2  
+InfluxDB shell 0.9.x.x
 >  
  
 A few influx example queries and settings:  
@@ -178,7 +178,7 @@ The script will use curl to make http inserts to InfluxDB so curl must be presen
 
 In Grafana, edit the Data Source to be Type InfluxDB 0.9.x; as this is running on the same host, Http settings are url http://localhost:8086  
 Data source name is used by the dashboards to idenify the database, effectively an alias. For example, Name: influxdb_timewatch, Database  timewatch, User admin.     
-ADD ROW -> Add Panel -> Graph  with multiple lines such as 'SELECT mean(value) FROM ntp_offset WHERE server=ip_of_server GROUP BY time($interval) server 
+ADD ROW -> Add Panel -> Graph  with multiple lines such as 'SELECT mean(value) FROM ntp_offset WHERE server=ip_of_server GROUP BY time($interval) server'   
 
 #### NTP offset for Singlestat
 
