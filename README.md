@@ -214,13 +214,14 @@ This is down to personal taste; a few suggestions:
 + Metrics now allow 'ALIAS BY' instead of using the tag value to label the server
 + Change admin password and create a view only user, timewatch.  Grafana Admin -> Global Users -> Create User (and Edit admin account)
 
-#### Server administration
-The timewatch script is running on a VM with only 1G of RAM.  The build script adds sar but this is not enabled.  
-edit /etc/cron.d/sysstat to enable, sar -r to check memory used   
-service sysstat start, service sysstat status, to check sysstat is running.   
+#### Timewatch server administration
+The timewatch script is running on a VM with only 1G of RAM.  The build script adds `sar` but this is not enabled.  
+edit `/etc/default/sysstat` to enable and check `/etc/cron.d/sysstat` if monitoring required at intervals other than the default 10 minutes.     
+use  `sar -r` to check memory usage.      
+`service sysstat start`, `service sysstat status`, to start and check sysstat is running.   
 
 Check influxdb and grafana are configured to run at start up with `sysv-rc-conf`  
 
-Create backups (snapshots) of influx while the detabase is still running with `influxd backup snapshot_file_name`  
+Create backups (snapshots) of influx while the database is still running with `influxd backup snapshot_file_name`  
 
 
