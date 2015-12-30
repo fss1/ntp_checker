@@ -166,7 +166,7 @@ Paths vary between versions, check within /etc/init.d/influxdb
 Configuration file is /etc/influxdb/influxdb.conf  
 The backup (snapshot) option in 0.9.5 had issues but seems to work in 0.9.6 without modifying the conf file. 
 Repeating the `influxd backup` command to the same file name results in a .0 incremental file being created.   
-To restore, `service influxd stop`, then `influxd restore -config /etc/influxdb/influxdb.conf`  
+To restore, `service influxd stop`, then `influxd restore -config /etc/influxdb/influxdb.conf /path_to/snapshot_file`  
     
 For plotting purposes, the external reference servers become a single plot with the same name defined in $ref_server.  
 
