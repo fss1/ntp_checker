@@ -163,9 +163,10 @@ Confimr retention is active with
 SHOW RETENTION POLICIES ON "timewatch" (there is always a default policy)  
 
 Paths vary between versions, check within /etc/init.d/influxdb      
-The backup (snapshot) option was found not to work and impacted the database process.  It was necessary to add the snapshot line into the conf file:  
-`[snapshot]`   
-`enabled = true # Disabled by default if not set.`  
+Configuration file is /etc/influxdb/influxdb.conf  
+The backup (snapshot) option in 0.9.5 had issues but seems to work in 0.9.6 without modifying the conf file. 
+Repeating the `influxd backup` command to the same file name results in a .0 incremental file being created.   
+To restore, `service influxd stop`, then `influxd restore -config /etc/influxdb/influxdb.conf`  
     
 For plotting purposes, the external reference servers become a single plot with the same name defined in $ref_server.  
 
@@ -217,5 +218,9 @@ This is down to personal taste; a few suggestions:
 The timewatch script is running on a VM with only 1G of RAM.  The build script adds sar but this is not enabled.  
 edit /etc/cron.d/sysstat to enable, sar -r to check memory used   
 service sysstat start, service sysstat status, to check sysstat is running.   
+
+Check influxdb and grafana are configured to run at start up with `sysv-rc-conf`  
+
+Create backups (snapshots) of influx while the detabase is still running with `influxd backup snapshot_file_name`  
 
 
