@@ -139,6 +139,9 @@ or the command line:
 Connected to http://localhost:8086 version  
 InfluxDB shell 0.9.x.x
 >  
+
+Check out the query language specificaiton https://influxdb.com/docs/v0.9/query_language/spec.html   
+Be careful with keywords.  SERVER is a keyword and matches 'server' in a query if also used as a database key.  This still works but it is necessary to double quote "server" in a query string.   
  
 A few influx example queries and settings:  
     
@@ -163,9 +166,10 @@ Confimr retention is active with
 SHOW RETENTION POLICIES ON "timewatch" (there is always a default policy)  
 
 Paths vary between versions, check within /etc/init.d/influxdb      
-The backup (snapshot) option was found not to work and impacted the database process.  It was necessary to add the snapshot line into the conf file:  
-`[snapshot]`   
-`enabled = true # Disabled by default if not set.`  
+Configuration file is /etc/influxdb/influxdb.conf  
+The backup (snapshot) option in 0.9.5 had issues but seems to work in 0.9.6 without modifying the conf file. 
+Repeating the `influxd backup` command to the same file name results in a .0 incremental file being created.   
+To restore, `service influxd stop`, then `influxd restore -config /etc/influxdb/influxdb.conf /path_to/snapshot_file`  
     
 For plotting purposes, the external reference servers become a single plot with the same name defined in $ref_server.  
 
@@ -213,9 +217,14 @@ This is down to personal taste; a few suggestions:
 + Metrics now allow 'ALIAS BY' instead of using the tag value to label the server
 + Change admin password and create a view only user, timewatch.  Grafana Admin -> Global Users -> Create User (and Edit admin account)
 
-#### Server administration
-The timewatch script is running on a VM with only 1G of RAM.  The build script adds sar but this is not enabled.  
-edit /etc/cron.d/sysstat to enable, sar -r to check memory used   
-service sysstat start, service sysstat status, to check sysstat is running.   
+#### Timewatch server administration
+The timewatch script is running on a VM with only 1G of RAM.  The build script adds `sar` but this is not enabled.  
+edit `/etc/default/sysstat` to enable and check `/etc/cron.d/sysstat` if monitoring required at intervals other than the default 10 minutes.     
+use  `sar -r` to check memory usage.      
+`service sysstat start`, `service sysstat status`, to start and check sysstat is running.   
+
+Check influxdb and grafana are configured to run at start up with `sysv-rc-conf`  
+
+Create backups (snapshots) of influx while the database is still running with `influxd backup snapshot_file_name`  
 
 
