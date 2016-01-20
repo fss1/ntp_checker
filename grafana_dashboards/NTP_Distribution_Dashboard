@@ -2086,7 +2086,7 @@
       "title": "TIMEWATCH HOME PAGE",
       "tooltip": "NTP Checkers homepage",
       "type": "link",
-      "url": "http://timewatch.bskyb.com"
+      "url": "http://timewatch.somesite.com"
     },
     {
       "icon": "cloud",
@@ -2095,7 +2095,7 @@
       "title": "INFLUXDB ADMINISTRATION",
       "tooltip": "InfluxDB administration",
       "type": "link",
-      "url": "http://ut002870.bskyb.com:8083/"
+      "url": "http://ut002870.somesite.com:8083/"
     },
     {
       "icon": "info",
@@ -2104,7 +2104,7 @@
       "title": "INTERNAL SERVERS LIST",
       "tooltip": "List of internal servers being monitored",
       "type": "link",
-      "url": "http://timewatch.bskyb.com/internal_ntp_servers_list.txt"
+      "url": "http://timewatch.somesite.com/internal_ntp_servers_list.txt"
     },
     {
       "icon": "info",
@@ -2113,7 +2113,7 @@
       "title": "LOG FILES",
       "tooltip": "ntplog log directory (last 28 days)",
       "type": "link",
-      "url": "http://timewatch.bskyb.com/ntplog/"
+      "url": "http://timewatch.somesite.com/ntplog/"
     },
     {
       "icon": "info",
@@ -2122,7 +2122,7 @@
       "title": "WARNING FILES",
       "tooltip": "warning file directory",
       "type": "link",
-      "url": "http://timewatch.bskyb.com/ntpwarnings/"
+      "url": "http://timewatch.somesite.com/ntpwarnings/"
     },
     {
       "asDropdown": false,
@@ -2135,7 +2135,7 @@
       "icon": "external link",
       "tags": [],
       "targetBlank": true,
-      "title": "BBC TRAVEL PAGE",
+      "title": "BBC TRAVEL",
       "tooltip": "BBC travel page",
       "type": "link",
       "url": "http://www.bbc.co.uk/travel"
