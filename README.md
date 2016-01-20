@@ -149,12 +149,12 @@ CREATE DATABASE timewatch
 DROP DATABASE timewatch   
 SHOW MEASUREMENTS   
 SHOW SERIES   
-SHOW SERIES FROM ntp_offset WHERE server = '192.168.12.34'   
+SHOW SERIES FROM ntp_offset WHERE "server" = '192.168.12.34'   
 SHOW TAG KEYS FROM ntp_offset   
-select \* from ntp_offset where server =~ /10.0.0.\*/   
+select \* from ntp_offset where "server" =~ /10.0.0.\*/   
 select \* from /.\*/ limit 5   
 select value from ntp_offset where time > now() - 1h limit 100   
-SELECT last(value) FROM poffset WHERE time > now() - 1h and server =~ /ref_server/  
+SELECT last(value) FROM poffset WHERE time > now() - 1h and "server" =~ /ref_server/  
 The select syntax takes the usual now() with d for day w for week.  
 
 CREATE USER god WITH PASSWORD 'keepcalmandcodequietly' WITH ALL PRIVILEGES   
