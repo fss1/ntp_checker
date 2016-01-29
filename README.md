@@ -122,7 +122,15 @@ theta = T(B) - T(A) = 1/2 * [(T2-T1) + (T3-T4)]
 **Net::NTP** returns the _delay_ from the sender (B) of $packet given known local xmttime(T1) and rectime(T4)   
 delta = T(ABA) = (T4-T1) - (T3-T2) 
 
+#### Identifying NTP services on the LAN
+Use nmap to scan for port 123 responses.  To identify domain controllers & active directory forests, it is possible to use nslookup from a client on the same Windows domain.  Check the Service Location (SRV) locator resource records for your_local_domain.com with the command below.  The SRV record is a Domain Name System (DNS) resource record that is used to identify servers hosting specific services, in this case ldap and ntp  
 
+`nslookup`  
+` > set type=all`  
+` >  _ldap._tcp.dc._msdcs.your_local_domain(s).com`  
+and   
+` > ntp._udp.your_local_domain(s).com`   
+ 
 # Timewatch
 It would be nice to visualise the data.  InfluxDB + Grafana seem to be a nice match.
 ntp_checker above 0.0.37 gained influxDB integration to become Timewatch.  
