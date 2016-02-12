@@ -235,4 +235,68 @@ Check influxdb and grafana are configured to run at start up with `sysv-rc-conf`
 
 Create backups (snapshots) of influx while the database is still running with `influxd backup snapshot_file_name`  
 
+#### NTP configuration
+It was found that a slight glitch may occur if the checking script runs while the local clock is being adjusted. 
+To prevent this it is possible to synchronise the local clock at a fixed time using cron just before the checking script is run. 
+It is possible to check the peers list while ntpd is running with 'ntpq -p'. If you don't want to use a 'random' pool modify the /etc/ntp.conf with your preferred time sources  
+
+`server swisstime.ethz.ch`  
+`server ntp0.pipex.net`  
+`server ntp-p1.obspm.fr`  
+`server ntp1.npl.co.uk`  
+`server ntp1.sp.se`  
+`server ntp2.ja.net`  
+`server ptbtime1.ptb.de`  
+
+UK ntp1.npl.co.uk National Physical Laboratory  
+Teddington, Middlesex  
+
+UK ntp0.pipex.net Pipex  
+
+CH swisstime.ethz.ch  
+Integrated Systems Laboratory, Swiss Fed. Inst. of Technology, Zurich  
+
+FR ntp-p1.obspm.fr  
+LPTF - Observatoire de Paris, France  
+
+SE ntp1.sp.se (62.119.40.98)
+SP Swedish National Testing and Research Institute, BORAS, SWEDEN
+
+UK ntp2.ja.net (193.63.94.26)  
+University of London Computer Centre, UK  
+
+DE ptbtime1.ptb.de (192.53.103.103)  
+Physikalisch-Technische Bundesanstalt (PTB), Braunschweig, Germany  
+
+also add the usual restrictions  
+
+`restrict swisstime.ethz.ch noquery nomodify notrap`  
+`restrict ntp0.pipex.net noquery nomodify notrap`  
+`restrict ntp-p1.obspm.fr noquery nomodify notrap`  
+`restrict ntp1.npl.co.uk noquery nomodify notrap`  
+`restrict ntp1.sp.se noquery nomodify notrap`  
+`restrict ntp2.ja.net noquery nomodify notrap`  
+`restrict ptbtime1.ptb.de noquery nomodify notrap`    
+
+noquery - deny ntpq and ntpdc requests  
+nomodify - deny modification requests from these servers (query ok)  
+notrap - Decline to provide mode 6 control message trap service to matching hosts  
+
+Make the new ntp.conf active `service ntp restart` and check with ntpq -p  
+
+Manually sync with 'ntpd -gqx' (ntpdate is deprecated)  
+
+-g This option allows the time to  be  set  to  any value without restriction  
+-q Exit  the ntpd just after the first time the clock is set  
+
+add ntpd to cron so it runs a minute or so before the check script  
+
+`*/15 * * * * /root/timewatch.pl > /dev/null`  
+`14-59/15 * * * * /usr/sbin/ntpd -gqx >> /root/ntpd_log.txt && date >> /root/ntpd_log.txt`
+
+`service ntp stop`
+
+Stop the ntp service running on reboot with `sysv-rc-conf` (chkconfig is getting old). 
+Remove the logging from cron once it has been proven.
+
 
