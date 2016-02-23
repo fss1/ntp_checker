@@ -21,7 +21,7 @@ use Sys::Hostname;
 # intended for hosting  timewatch.pl script which evolved from nto_checker to support 
 # Influx/Grafana and became timewatch.pl
 
-our $VERSION = '0.0.05';
+our $VERSION = '0.0.06';
 
 # influxdb download
 my $influxdb_latest =  'https://s3.amazonaws.com/influxdb/influxdb_0.9.6.1_amd64.deb';
@@ -84,11 +84,21 @@ system 'apt-get install sysv-rc-conf';
 print "\n Installing sar to check system usage (sysstat package) \n";
 system 'apt-get install sysstat';
 
+# stop the ntp service (and from booting) then set the clock
+print "\n Stopping ntp service and setting clock with ntpd -gqx\n";
+system 'update-rc.d ntp disable';
+system 'service ntp stop';
+system 'ntpd -gqx';
+
 # edit crontab to provide execution of the timewatch script every 15 minutes
 print
-" Editing crontab, use crontab -e to change\n */15 * * * * /root/timewatch.pl > /dev/null \n if required \n";
+" Editing crontab, use crontab -e to change script run if every 15 mins is not acceptable \n";
 
 system 'crontab -l > cron_for_timewatch';
+
+system "echo '# Run ntpd to set clock 1 min before check script runs; 14,29,44,59' >> cron_for_timewatch";
+system "echo '14-59/15 * * * * /usr/sbin/ntpd -gqx  > /dev/null' >> cron_for_timewatch";
+system "echo '# Run check script every 15 mins on the hour' >> cron_for_timewatch";
 system "echo '*/15 * * * * /root/timewatch.pl > /dev/null' >> cron_for_timewatch";
 system 'crontab cron_for_timewatch';
 
@@ -117,6 +127,8 @@ SHOW RETENTION POLICIES ON "timewatch" (there is always a default policy)
 Check memory & system use with sar.  This was installed but needs to be enabled:
 edit /etc/cron.d/sysstat to enable, sar -r to check memory used
 service sysstat start, service sysstat status to check
+Also check the ntp service is disabled with sysv-rc-conf,
+this assumes you want to specify the run time of ntpd from cron.
 
 
 Thats all folks, Share and Enjoy.
