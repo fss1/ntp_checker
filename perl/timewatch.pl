@@ -26,7 +26,7 @@ use Mail::Mailer;                     # For smtp
 # can redistribute it and/or modify it
 # under the same terms as Perl 5.14.0.
 
-our $VERSION = '0.0.49';
+our $VERSION = '0.0.51';
 
 # *** SCRIPT TO POLL INTERNAL NTP SOURCES, CHECK RETURNED OFFSET (AGAINST NPL) AND LEAP INDICATOR ***
 # *** WARN IF ANY SOURCE IS OUTSIDE OFFSET LIMIT, UNAVAILABLE OR HAS THE LI SET ***
@@ -45,6 +45,12 @@ my $mailcc = 'support@domain.com';
 
 # File containing list of internal servers (one per line)
 my $ntplist = 'internal_ntp_servers_list.txt';
+
+# Restrict servers in the list above from sending emails
+# File containing list of restricted internal servers (one per line)
+# A pattern match from this list in the warning will prevent the warning from email alerting
+# Logs will still be created. Web page will still show warning state - just no email
+my $ntp_restrict = 'restricted_ntp_servers.txt';
 
 # name for log files (as required date_stamp.txt extension will be created/appended)
 my $logname   = 'ntp_test_log';
@@ -95,8 +101,12 @@ my $offset_limit = 0.3;    # Offset difference in seconds
 # Database name (table name)
 my $db_name = 'timewatch';
 
-# Measurement will be, time_offset; row name defined here:
+# Measurement will be, time_offset; row name for database defined here:
 my $measurement = 'ntp_offset';
+
+# Absolute offset calculation takes the absolute difference
+# between ntp_offset and external reference servers offset.  Define row name for databse here:
+my $abs_measurement = 'abs_offset';
 
 # For single stat, +ve version of time_offset with exceptions 666,667; row/measurement name defined here:
 my $poffset = 'poffset';
@@ -131,6 +141,9 @@ my %response;
 
 # populate array @servers with ip list from server list
 my @servers = ();
+
+# populate array @restricted with list from restricted server list
+my @restricted = ();
 
 # variable to hold the result message shown on the web page
 my $results;
@@ -437,7 +450,7 @@ exit 2 if !print {$HELPTXT} "$help";
 close $HELPTXT or carp "Unable to close $help\n";
 
 # Read the ntp source servers list into the array @servers
-# skip emply or lines begginging space or #
+# skip empty or lines begginging space or #
 # chomp; only removes current input record separator but if originated from Windows ...
 
 open my $SERVERS, '<', "$ntplist"
@@ -450,6 +463,21 @@ while (<$SERVERS>) {
     push( @servers, $_ );
 }
 close $SERVERS or croak "server list file wont close: S!";
+
+# Read restricted servers into @restricted
+# A pattern match in the warning string prevents the warning from logging
+# or raising an email alert.  Empty lines or lines beginning # are skipped
+
+open my $RESTRICTIONS, '<', "$ntp_restrict"
+  or warn
+"Restrected server list file wont open, check $ntp_restrict path and filename are correct: $!";
+while (<$RESTRICTIONS>) {
+    $_ =~ s/\r?\n$//xms;
+    next
+      if ( $_ =~ m/^\s+/xms ) || ( $_ =~ m/^\#+/xms ) || ( $_ =~ m/^\s*$/xms );
+    push( @restricted, $_ );
+}
+close $RESTRICTIONS or warn "restricted file list wont close: S!";
 
 # print join (", ", @servers); # debug line to print servers array
 
@@ -470,6 +498,9 @@ close $LOG || die "Cannot close $logname\n";
 ## sub routing to create a single warning log, email only the first  and append (but no email) if the log already exists ##
 sub warn_append {
 
+    # read warning string passed to sub into add_warning
+    my $add_warning = shift;
+
     # if warning log does not exist, create it, include the header
     if ( !-f $warn_name_txt ) {
 
@@ -481,15 +512,25 @@ sub warn_append {
 "\n  --- START OF WARNINGS LOG from $PROGRAM_NAME V$VERSION ---\n  --- first written at: $runtime[0] $runtime[1] ---\n  --- Offset limit used between reference and internal server = $offset_limit seconds ---\n  --- External reference used is $external_ref1 or $external_ref2 ---\n  --- For the full log check $logto ---\n  --- This script was run from host: $host ---\n\n";
 
         # now add the warning to the header
-        my $add_warning = shift;
         exit 2 if !print {$WARN} "$add_warning";
         close $WARN || warn "Cannot close $warn_name_txt\n";
 
- # email this warning here so it is only sent when the log file is first created
+# email this warning here so it is only sent when the warning log file is first created
+# check warning does not contain any servers (or other matching patterns) from the restricted servers list
+# retrun if match is found, without sending email
+        foreach (@restricted) {
+            my $restrict = $_;
+            if ( $add_warning =~ /\Q$restrict\E/ ) {
+                print
+"  *** $restrict is in the restricted list - no email was sent\n";
+                return;
+            }
+        }
         my $mail_warning =
 "$add_warning\nTHIS IS THE FIRST WARNING OF POSSIBLY MANY - ONLY A SINGLE EMAIL IS SENT UNTIL THE WARNING(S) ARE ACKNOWLEDGED\n\nFor more detail check:\nTIMEWATCH hompage http://$host\nWarning log http://$host/ntpwarnings/\nLog files http://$host/ntplog/";
         print "\n  emailing warning $mail_warning\n";
         smtp_send($mail_warning);
+### add snmp trap send in here
         return;
     }
 
@@ -498,9 +539,8 @@ sub warn_append {
     else {
         open my $WARN, '>>', "$warn_name_txt"
           || carp "can't open file $warn_name_txt\n";
-        my $append_warning = shift;
 
-        exit 2 if !print {$WARN} "$append_warning";
+        exit 2 if !print {$WARN} "$add_warning";
         close $WARN or carp "Unable to close $warn_name_txt\n";
         return;
     }
@@ -517,30 +557,32 @@ sub log_append {
     return;
 }
 
-# display local host peer information using ntpq
-print
-"\n*** List of peers used by host $host to set the local clock, via ntpq -p ***\n";
-log_append(
-"\n*** List of peers used by host $host to set the local clock, using ntpq -p ***\n"
-      . "Offset for ntpq is in milliseconds.  Peer offsets are not analysed\n\n"
-);
+# display local host peer information using ntpq NOT used as ntpd is run on demand for timewatch2 to prevent clock being set while comparison in progress
+
+#print
+#"\n*** List of peers used by host $host to set the local clock, via ntpq -p ***\n";
+#log_append(
+#"\n*** List of peers used by host $host to set the local clock, using ntpq -p ***\n"
+#      . "Offset for ntpq is in milliseconds.  Peer offsets are not analysed\n\n"
+#);
 
 my $pid;    # process id used for waitpid check
-eval {
-    $pid = open2( \*READ, 0, '/usr/bin/ntpq -p' );
-    1;
-}
-  or die "ntpq command failed, check path to this command\n";
+
+# system("ntpq -p") request peers from local machine if ntpd was running
+
+# eval {
+#     $pid = open2( \*READ, 0, '/usr/bin/ntpq -p' );
+#    1;
+# }
+#  or die "ntpq command failed, check path to this command\n";
 
 # Ensures process is finished (requires use POSIX)
-waitpid $pid, 0;
+# waitpid $pid, 0;
 
-while (<READ>) {
-    print "$_";
-    log_append("$_");
-}
-
-# system("ntpq -p");    # request peers from local machine
+# while (<READ>) {
+#    print "$_";
+#    log_append("$_");
+# }
 
 # Fetch reference time and store offset in $ref_offset
 # If referecne clock cannot be identified, WARN and try the second external reference
@@ -691,7 +733,7 @@ foreach (@servers) {
 
     chomp $server;
 
-# To prevent use of uninit value, first server is added to $server list, then additonal servers conct with additional space
+# To prevent use of uninit value, first server is added to $server list, then additonal servers concat with additional space
     if ( !defined $server_list ) { $server_list = $server; }
 
 # add to server list, to build a space separated variable from the @servers array to be used by ntpdate.
@@ -759,11 +801,23 @@ foreach (@servers) {
             $warning++;
         }
 
-       # For comparison with the limit, the offset difference is made positive by taking the absolute value
+# For comparison with the limit, the offset difference is made positive by taking the absolute value
         my $abs_diff = 0;
-       # calcutale absolute (always positive difference) between offset response and reference offset
-       $abs_diff = abs( $response{Offset} - $ref_offset );
 
+# calcutale absolute (always positive difference) between offset response and reference offset
+        $abs_diff = abs( $response{Offset} - $ref_offset );
+
+# timewatch2 adds the second plot for absolute difference from external reference
+# create an entry for $abs_measurement
+
+        @insert = (
+            $db_name, $abs_measurement, $server,
+            $response{'Reference Clock Identifier'}, $abs_diff
+        );
+
+  # print " \n $abs_measurement being added to $db_name, value is $abs_diff \n";
+  # insert to influxdb
+        influx_insert(@insert);
 
 # print "\n ref offset is: $ref_offset, response is $response{Offset}, absolute difference is $abs_diff\n";
         if ( $abs_diff > $offset_limit ) {
@@ -788,7 +842,7 @@ foreach (@servers) {
         );
 
         # If no ref clock, set offset value to 666 (no reponse indicator)
-        
+
         @insert = ( $db_name, $poffset, $server, 666 );
 
         influx_single(@insert);
@@ -1104,7 +1158,8 @@ my $style = create_style();
 # If warnings found, change the grey headings to red (555 is reserved for default headings) OR if a previous warning file exists
 if ( ( $warning > 0 ) or ( -f $warn_name_txt ) ) {
     $style =~ s/#555/#F00/g;
-# Dont use the x option here as # is not a comment its a value to be matched
+
+    # Dont use the x option here as # is not a comment its a value to be matched
 }
 
 # write the CSS to the $css file
