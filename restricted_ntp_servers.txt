@@ -1,0 +1,10 @@
+# Restricted servers list. Matching items in this list will prevent alerting (but not logging).
+# This list is pattern matched with the warning string. The server is still tested and logged.
+# A match in the list below prevents an alert being sent.
+# To be excluded from an alert, the server IP or hostname must match that in the servers list.  
+# Partial matches such as 192.168 can be used to disable alerts for a subnet.
+# Lines beginning with # or space or a new line are ignored
+
+# Your restricted devices go here:
+192.168.0.1
+192.168.0.2
