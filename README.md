@@ -161,6 +161,7 @@ SHOW SERIES FROM ntp_offset WHERE "server" = '192.168.12.34'
 SHOW TAG KEYS FROM ntp_offset   
 select \* from ntp_offset where "server" =~ /10.0.0.\*/   
 select \* from /.\*/ limit 5   
+select * from ntp_offset where "server" = '192.168.0.1' and time > '2016-01-26' and time < '2016-01-27'
 select value from ntp_offset where time > now() - 1h limit 100   
 SELECT last(value) FROM poffset WHERE time > now() - 1h and "server" =~ /ref_server/  
 The select syntax takes the usual now() with d for day w for week.  
@@ -298,5 +299,22 @@ add ntpd to cron so it runs a minute or so before the check script
 
 Stop the ntp service running on reboot with `sysv-rc-conf` (chkconfig is getting old). 
 Remove the logging from cron once it has been proven.
+The build scipt will stop ntpd and run this from cron but the suggested /etc/ntp.conf configuration change above is manual but can be left with the Ubuntu default.
 
+# Timewatch 2
+
+More features were requested.  These will be added to 0.0.50 and higher:
++ Ability to restrict email alerts for some servers while still maintaining checking/logging
++ Capture and plot the absolute offset compared to the external reference server
++ SNMP trap to be sent along with the existing email alert
+
+A restricted servers list, restricted_ntp_servers.txt can be placed in the same directory as the timewatch script. 
+Matching items in this list will prevent alerting (but not logging).
+This list is pattern matched with the warning string. The server is still tested and logged.
+A match in the list below prevents an alert being sent. 
+To be excluded from an alert, the server IP or hostname must match that in the servers list.  
+Partial matches such as 192.168 can be used to disable alerts for a subnet.
+Lines beginning with # or space or a new line are ignored.  This feature was to allow legacy devices to still be monitored while only raising alerts for current high priority services.
+
+An additonal series, abs_offset has been added to the timewatch database.  This is the absolute (always positive) difference between the internal server and the external server (NPL or PTB).  
 
