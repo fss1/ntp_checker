@@ -318,3 +318,31 @@ Lines beginning with # or space or a new line are ignored.  This feature was to 
 
 An additonal series, abs_offset has been added to the timewatch database.  This is the absolute (always positive) difference between the internal server and the external server (NPL or PTB).  
 
+#### SNMP Testing
+
+To recieve a trap on a Mac:   
+create /etc/snmp/snmptrapd.conf and add`disableAuthorization yes`  
+`sudo snmptrapd -f -Lo`   
+
+To trap to syslog on Ubuntu:  
+
+`sudo apt-get install snmpd`  
+`vi /etc/default/snmpd`  
+
+Change, `TRAPDRUN= yes`  
+
+snmptrapd now starts automatically  
+
+Check with,  `sudo service snmpd status`  
+ 
+snmptrapd, needs some access control defined, for example /etc/snmpsnmptrapd.conf line: `authCommunity log public` 
+will let any incoming notification with a community name of public be logged to syslog 
+ 
+`sudo service snmpd restart` to restart services after the configuration change.           
+
+Now tail the log to see the output `tail -f /var/log/syslog`
+
+
+
+
+
