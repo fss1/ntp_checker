@@ -33,7 +33,7 @@ Create an instance of Ubuntu 14.04 server in your favourite VM.  From /root, dow
 `wget https://raw.githubusercontent.com/fss1/ntp_checker/master/perl/ntp_builder.pl`  
 `perl ntp_builder.pl`  
 
-`dpkg-reconfigure tzdata` needs too be run manually as part of the build to set/check the UTC time zone. Select Geographic area, None of the above -> UTC and run `dpkg-reconfigure -f noninteractive tzdata` or `date` to confirm.  A prompt is generated at the end of the build script to set the time zone to UTC.  If InfuxDB and Grafan are required also run the timewatch_builder script:  
+`dpkg-reconfigure tzdata` needs too be run manually as part of the build to set/check the UTC time zone. Select Geographic area, None of the above -> UTC and run `dpkg-reconfigure -f noninteractive tzdata` or `date` to confirm.  A prompt is generated at the end of the build script to set the time zone to UTC.  If InfuxDB and Grafana are required also run the timewatch_builder script:  
 
 `wget https://github.com/fss1/ntp_checker/blob/master/perl/timewatch_builder.pl`  
 `perl timewatch_builder.pl`
@@ -304,8 +304,8 @@ The build scipt will stop ntpd and run this from cron but the suggested /etc/ntp
 # Timewatch 2
 
 More features were requested.  These will be added to 0.0.50 and higher:
-+ Ability to restrict email alerts for some servers while still maintaining checking/logging
-+ Capture and plot the absolute offset compared to the external reference server
++ Ability to restrict alerting (email/snmp) for selected servers while still maintaining checking/logging
++ Capture and plot the absolute offset compared to the external reference (NPL/PTB)
 + SNMP trap to be sent along with the existing email alert
 
 A restricted servers list, restricted_ntp_servers.txt can be placed in the same directory as the timewatch script. 
