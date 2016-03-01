@@ -9,6 +9,7 @@ use Carp;
 use Fcntl qw(:flock);
 use Sys::Hostname;
 use File::Copy;
+use Net::SNMP qw(:asn1);    # For snmp
 
 # Required none core modules
 use Net::NTP qw(get_ntp_response);    # For NTP
@@ -26,7 +27,7 @@ use Mail::Mailer;                     # For smtp
 # can redistribute it and/or modify it
 # under the same terms as Perl 5.14.0.
 
-our $VERSION = '0.0.51';
+our $VERSION = '0.0.52';
 
 # *** SCRIPT TO POLL INTERNAL NTP SOURCES, CHECK RETURNED OFFSET (AGAINST NPL) AND LEAP INDICATOR ***
 # *** WARN IF ANY SOURCE IS OUTSIDE OFFSET LIMIT, UNAVAILABLE OR HAS THE LI SET ***
@@ -40,6 +41,17 @@ our $VERSION = '0.0.51';
 my $mailaddress = 'your_company_email_relay';
 my $mailto      = 'alerts@domain.com';
 
+# SNMP trap configuations
+# SNMP HOST.  Define the snmp trap destination
+my $snmp_host="10.69.7.22";
+# SNMP COMMUNITY. Set the community string to match that expected by the trap receiver
+my $snmp_community="public";
+# SNMP OID. Set the object identifier.group.generic.specific, values
+# This is not checked for validity and will be sent as defined here:
+# e.g. snmp_oid="1.3.6.1.4.1.16924.6.6.6"
+my $snmp_oid="1.3.6.1.4.1.16924.6.6.6";
+
+
 # $mailcc will take comma separate multiple addresses.  'reports@domain.com, support@domain.com'
 my $mailcc = 'support@domain.com';
 
@@ -49,7 +61,7 @@ my $ntplist = 'internal_ntp_servers_list.txt';
 # Restrict servers in the list above from sending emails
 # File containing list of restricted internal servers (one per line)
 # A pattern match from this list in the warning will prevent the warning from email alerting
-# Logs will still be created. Web page will still show warning state - just no email
+# Logs will still be created. Web page will still show warning state - just no email 
 my $ntp_restrict = 'restricted_ntp_servers.txt';
 
 # name for log files (as required date_stamp.txt extension will be created/appended)
@@ -258,6 +270,42 @@ sub smtp_send {
 
 }
 
+## SUB TO SEND SNMP ERROR TRAPS ##
+
+sub snmp_send {
+    my $message = shift;    # Text string used for trap
+
+    my ( $session, $error ) = Net::SNMP->session(
+        -hostname => shift || $snmp_host,
+        -community => $snmp_community,
+        -version   => 'snmpv1',
+        -port      => shift || '162'
+    );
+
+    if ( !defined $session ) {
+        printf "Session error: %s.\n", $error;
+        exit 1;
+    }
+
+ my $svsvcname = $snmp_oid;
+
+    my @oids = ( $svsvcname, OCTET_STRING, $message )
+      ; # OCTET_STRING requried for a text STRING to be sent (could be INTEGER, INTERGER32 etc)
+
+    my $result = $session->trap( -varbindlist => \@oids );
+
+    if ( !defined $result ) {
+        printf "result error: %s.\n", $session->error;
+        $session->close;
+        exit 1;
+    }
+
+    $session->close;
+    return;
+
+} # End of SNMP sub.
+
+
 ## SUB TO WRITE TO INFLUXDB ##
 
 sub influx_insert {
@@ -382,6 +430,7 @@ my $help = << "HELP";
        -h This help page
        -v Verbose mode
        -m Email send test
+       -s SNMP send test
        
        Servers to be polled are in:
        ./$ntplist
@@ -426,22 +475,32 @@ my $help = << "HELP";
 
 HELP
 
-# If ARGV -h pring the help page
+# If ARGV -h print the help page
 
 if ( defined( $ARGV[0] ) && $ARGV[0] eq '-h' ) {
     print "$help";
     exit 0;
 }
 
-# If ARGV -m sent a test mail
+# If ARGV -m send a test mail
 
 if ( defined( $ARGV[0] ) && $ARGV[0] eq '-m' ) {
-    print "\n Sending test email to $mailto\n";
+    print "\n Sending test email to $mailto\n\n";
     my $testmessage =
 "This is a test message sent to $mailto via smtp relay at $mailaddress\n\nFor more detail check:\nTIMEWATCH homepage http://$host\nWarning log http://$host/ntpwarnings/\nLog files http://$host/ntplog/";
     smtp_send($testmessage);
     exit 0;
 }
+
+# If ARGV -s send a test trap
+
+if ( defined( $ARGV[0] ) && $ARGV[0] eq '-s' ) {
+    print "\n Sending test trap to $snmp_host\n\n";
+   my $snmp_warning = "This is a test trap sent to $snmp_host. Visit http://$host for more deatils";
+   snmp_send( $snmp_warning);
+   exit 0;
+}
+
 
 # write the HELPHTML content to the $index file
 open my $HELPTXT, '>', $helptxt
@@ -469,20 +528,24 @@ close $SERVERS or croak "server list file wont close: S!";
 # or raising an email alert.  Empty lines or lines beginning # are skipped
 
 open my $RESTRICTIONS, '<', "$ntp_restrict"
-  or warn
-"Restrected server list file wont open, check $ntp_restrict path and filename are correct: $!";
-while (<$RESTRICTIONS>) {
-    $_ =~ s/\r?\n$//xms;
-    next
-      if ( $_ =~ m/^\s+/xms ) || ( $_ =~ m/^\#+/xms ) || ( $_ =~ m/^\s*$/xms );
-    push( @restricted, $_ );
-}
+   or warn 
+ "Restrected server list file wont open, check $ntp_restrict path and filename are correct: $!";
+ while (<$RESTRICTIONS>) {
+     $_ =~ s/\r?\n$//xms;
+     next
+       if ( $_ =~ m/^\s+/xms ) || ( $_ =~ m/^\#+/xms ) || ( $_ =~ m/^\s*$/xms );
+     push( @restricted, $_ );
+ }
 close $RESTRICTIONS or warn "restricted file list wont close: S!";
+
 
 # print join (", ", @servers); # debug line to print servers array
 
 # copy ntplist to www root, to make it visible to web gui
 copy( "$ntplist", "/var/www/$ntplist" ) or carp("copy of $ntplist failed");
+
+# copy restriction list to www root, for access via web gui
+copy( "$ntp_restrict", "/var/www/$ntp_restrict" ) or carp("no restrict file found $ntp_restrict");
 
 # Create a log name with the path and time stamp
 $logname = $logto . $logname . '_' . $runtime[2] . '.txt';
@@ -498,8 +561,8 @@ close $LOG || die "Cannot close $logname\n";
 ## sub routing to create a single warning log, email only the first  and append (but no email) if the log already exists ##
 sub warn_append {
 
-    # read warning string passed to sub into add_warning
-    my $add_warning = shift;
+# read warning string passed to sub into add_warning
+my $add_warning = shift;
 
     # if warning log does not exist, create it, include the header
     if ( !-f $warn_name_txt ) {
@@ -518,14 +581,14 @@ sub warn_append {
 # email this warning here so it is only sent when the warning log file is first created
 # check warning does not contain any servers (or other matching patterns) from the restricted servers list
 # retrun if match is found, without sending email
-        foreach (@restricted) {
-            my $restrict = $_;
-            if ( $add_warning =~ /\Q$restrict\E/ ) {
-                print
-"  *** $restrict is in the restricted list - no email was sent\n";
-                return;
-            }
+foreach (@restricted) {
+my $restrict = $_;
+ if ($add_warning =~ /\Q$restrict\E/)
+        {
+        print "  *** $restrict is in the restricted list - no email was sent\n";
+        return;
         }
+}
         my $mail_warning =
 "$add_warning\nTHIS IS THE FIRST WARNING OF POSSIBLY MANY - ONLY A SINGLE EMAIL IS SENT UNTIL THE WARNING(S) ARE ACKNOWLEDGED\n\nFor more detail check:\nTIMEWATCH hompage http://$host\nWarning log http://$host/ntpwarnings/\nLog files http://$host/ntplog/";
         print "\n  emailing warning $mail_warning\n";
@@ -583,6 +646,7 @@ my $pid;    # process id used for waitpid check
 #    print "$_";
 #    log_append("$_");
 # }
+
 
 # Fetch reference time and store offset in $ref_offset
 # If referecne clock cannot be identified, WARN and try the second external reference
@@ -801,23 +865,24 @@ foreach (@servers) {
             $warning++;
         }
 
-# For comparison with the limit, the offset difference is made positive by taking the absolute value
+       # For comparison with the limit, the offset difference is made positive by taking the absolute value
         my $abs_diff = 0;
-
-# calcutale absolute (always positive difference) between offset response and reference offset
-        $abs_diff = abs( $response{Offset} - $ref_offset );
+       # calcutale absolute (always positive difference) between offset response and reference offset
+       $abs_diff = abs( $response{Offset} - $ref_offset );
 
 # timewatch2 adds the second plot for absolute difference from external reference
 # create an entry for $abs_measurement
 
-        @insert = (
-            $db_name, $abs_measurement, $server,
-            $response{'Reference Clock Identifier'}, $abs_diff
-        );
+ @insert = (
+         $db_name, $abs_measurement, $server,
+         $response{'Reference Clock Identifier'},
+         $abs_diff
+     );
 
-  # print " \n $abs_measurement being added to $db_name, value is $abs_diff \n";
-  # insert to influxdb
-        influx_insert(@insert);
+# print " \n $abs_measurement being added to $db_name, value is $abs_diff \n";
+     # insert to influxdb
+     influx_insert(@insert);
+
 
 # print "\n ref offset is: $ref_offset, response is $response{Offset}, absolute difference is $abs_diff\n";
         if ( $abs_diff > $offset_limit ) {
@@ -842,7 +907,7 @@ foreach (@servers) {
         );
 
         # If no ref clock, set offset value to 666 (no reponse indicator)
-
+        
         @insert = ( $db_name, $poffset, $server, 666 );
 
         influx_single(@insert);
@@ -888,7 +953,7 @@ log_append(
 );
 
 eval {
-    $pid = open2( \*READ, 0, '/usr/sbin/ntpdate -q europe.pool.ntp.org' );
+  $pid = open2( \*READ, 0, '/usr/sbin/ntpdate -q europe.pool.ntp.org' );
     1;
 }
   or die "ntpdate command failed, check path to this command\n";
@@ -974,11 +1039,12 @@ sub create_index {
             </section>
             <section>
             <header>
-            <h1>In the event of warnings</h1>
+            <h1>In the event of alerts and warnings</h1>
             </header>
             <p class="next-to-aside">
-            A new warning will create a warning log file and send an email alert. A warning condition exists while a current warning file is present.<br>
-            No further emails are sent for new warnings; these are appended to the current warning log.<br>
+            Alerting can be prevented for <a href="RESTRICTEDLIST" target="_blank">selected servers</a>.   
+            A new warning will create a warning log file and send an email/SNMP alert. A warning condition exists while a current warning file is present.<br>
+            No alerts are sent for further warnings but these are appended to the current warning log.<br>
             The warning file is automatically renamed with a date stamp if older than 7 days. Acknowledging the warning date stamps the file name. Once date stamped, the warning file is effectively archived.
             <br>For a graphical view, log into Grafana (port 3000) with user and password 'timewatch' 
             </p>
@@ -1137,6 +1203,7 @@ my $index_content = create_index();
 # Replace variable HTML content
 $index_content =~ s/RESULTS/$results/;
 $index_content =~ s/SERVERLIST/$ntplist/;
+$index_content =~ s/RESTRICTEDLIST/$ntp_restrict/;
 $index_content =~ s/LOGTO/$weblogto/g;
 $index_content =~ s/WARNTO/$webwarnto/g;
 $index_content =~ s/EXTERNALREF1/$external_ref1/;
@@ -1158,8 +1225,7 @@ my $style = create_style();
 # If warnings found, change the grey headings to red (555 is reserved for default headings) OR if a previous warning file exists
 if ( ( $warning > 0 ) or ( -f $warn_name_txt ) ) {
     $style =~ s/#555/#F00/g;
-
-    # Dont use the x option here as # is not a comment its a value to be matched
+# Dont use the x option here as # is not a comment its a value to be matched
 }
 
 # write the CSS to the $css file
