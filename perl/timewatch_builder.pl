@@ -21,7 +21,7 @@ use Sys::Hostname;
 # intended for hosting  timewatch.pl script which evolved from nto_checker to support 
 # Influx/Grafana and became timewatch.pl
 
-our $VERSION = '0.0.08';
+our $VERSION = '0.0.09';
 
 # influxdb download
 my $influxdb_latest =  'https://s3.amazonaws.com/influxdb/influxdb_0.9.6.1_amd64.deb';
@@ -108,6 +108,11 @@ system "echo '14-59/15 * * * * /usr/sbin/ntpd -gqx  >/dev/null 2>&1' >> cron_for
 system "echo '# Run check script every 15 mins on the hour' >> cron_for_timewatch";
 system "echo '*/15 * * * * /root/timewatch.pl >/dev/null 2>&1' >> cron_for_timewatch";
 system 'crontab cron_for_timewatch';
+
+# Add example restricted servers list 
+print "\n download the restricted_ntp_servers_list.txt\n";
+system 'wget https://raw.githubusercontent.com/fss1/ntp_checker/master/restricted_ntp_servers.txt';
+
 
 my $hostname = hostname();
 
