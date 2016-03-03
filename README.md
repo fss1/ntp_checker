@@ -294,8 +294,8 @@ add ntpd to cron so it runs a minute or so before the check script, redirect std
 
 `*/15 * * * * /root/timewatch.pl >/dev/null 2>&1`
 `14-59/15 * * * * /usr/sbin/ntpd -gqx >/dev/null 2>&1`  
-`# or this for debug`
-`# 14-59/15 * * * * /usr/sbin/ntpd -gqx >> /root/ntpd_log.txt && date >> /root/ntpd_log.txt`
+`# or this for debug`    
+`# 14-59/15 * * * * /usr/sbin/ntpd -gqx >> /root/ntpd_log.txt && date >> /root/ntpd_log.txt`    
 
 `service ntp stop`
 
