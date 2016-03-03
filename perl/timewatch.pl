@@ -508,7 +508,7 @@ if ( defined( $ARGV[0] ) && $ARGV[0] eq '-m' ) {
 if ( defined( $ARGV[0] ) && $ARGV[0] eq '-s' ) {
     print "\n Sending test trap to $snmp_host\n\n";
     my $snmp_warning =
-"This is a test trap from $PROGRAM_NAME version $VERSION sent to $snmp_host. Visit http://$host for more deatils";
+"This is a test trap from $PROGRAM_NAME version $VERSION sent to $snmp_host. Visit http://$host for more details";
     snmp_send($snmp_warning);
     exit 0;
 }
