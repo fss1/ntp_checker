@@ -27,7 +27,7 @@ use Mail::Mailer;                     # For smtp
 # can redistribute it and/or modify it
 # under the same terms as Perl 5.14.0.
 
-our $VERSION = '0.0.54';
+our $VERSION = '0.0.55';
 
 # *** SCRIPT TO POLL INTERNAL NTP SOURCES, CHECK RETURNED OFFSET (AGAINST NPL) AND LEAP INDICATOR ***
 # *** WARN IF ANY SOURCE IS OUTSIDE OFFSET LIMIT, UNAVAILABLE OR HAS THE LI SET ***
@@ -41,9 +41,12 @@ our $VERSION = '0.0.54';
 my $mailaddress = 'your_company_email_relay';
 my $mailto      = 'alerts@domain.com';
 
+# $mailcc will take comma separate multiple addresses.  'reports@domain.com, support@domain.com'
+my $mailcc = 'support@domain.com';
+
 # SNMP trap configuations
 # SNMP HOST.  Define the snmp trap destination
-my $snmp_host = "10.69.7.22";
+my $snmp_host = '10.1.2.3';
 
 # SNMP COMMUNITY. Set the community string to match that expected by the trap receiver
 my $snmp_community = "public";
@@ -54,9 +57,6 @@ my $snmp_community = "public";
 my $snmp_oid = '1.3.6.1.4.1.16924.217';
 my $generic  = '6';      # type 6 corresponds to "enterpriseSpecific"
 my $specific = '666';    # none negative integer as trap value
-
-# $mailcc will take comma separate multiple addresses.  'reports@domain.com, support@domain.com'
-my $mailcc = 'support@domain.com';
 
 # File containing list of internal servers (one per line)
 my $ntplist = 'internal_ntp_servers_list.txt';
