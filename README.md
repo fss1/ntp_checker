@@ -290,10 +290,12 @@ Manually sync with 'ntpd -gqx' (ntpdate is deprecated)
 -g This option allows the time to  be  set  to  any value without restriction  
 -q Exit  the ntpd just after the first time the clock is set  
 
-add ntpd to cron so it runs a minute or so before the check script  
+add ntpd to cron so it runs a minute or so before the check script, redirect stderr to stderr 2>&1 to prevent default email from cron (stdout > dev/null does not catch stderr)
 
-`*/15 * * * * /root/timewatch.pl > /dev/null`  
-`14-59/15 * * * * /usr/sbin/ntpd -gqx >> /root/ntpd_log.txt && date >> /root/ntpd_log.txt`
+`*/15 * * * * /root/timewatch.pl >/dev/null 2>&1`
+`14-59/15 * * * * /usr/sbin/ntpd -gqx >/dev/null 2>&1`  
+`# or this for debug'
+`# 14-59/15 * * * * /usr/sbin/ntpd -gqx >> /root/ntpd_log.txt && date >> /root/ntpd_log.txt`
 
 `service ntp stop`
 

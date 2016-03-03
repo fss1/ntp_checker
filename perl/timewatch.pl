@@ -27,7 +27,7 @@ use Mail::Mailer;                     # For smtp
 # can redistribute it and/or modify it
 # under the same terms as Perl 5.14.0.
 
-our $VERSION = '0.0.53';
+our $VERSION = '0.0.54';
 
 # *** SCRIPT TO POLL INTERNAL NTP SOURCES, CHECK RETURNED OFFSET (AGAINST NPL) AND LEAP INDICATOR ***
 # *** WARN IF ANY SOURCE IS OUTSIDE OFFSET LIMIT, UNAVAILABLE OR HAS THE LI SET ***
@@ -281,14 +281,14 @@ sub smtp_send {
 
 sub snmp_send {
     my $message = shift;    # Text string used for trap
-
+    chomp $message;         # Remove newline from message
     my $timeticks = time;   # Time stamp for Uptime added to the trap
 
     my ( $session, $error ) = Net::SNMP->session(
-        -hostname => shift || $snmp_host,
+        -hostname  => $snmp_host,
         -community => $snmp_community,
         -version   => 'snmpv1',
-        -port      => shift || '162'
+        -port      => '162'
     );
 
     if ( !defined $session ) {
@@ -604,7 +604,9 @@ sub warn_append {
 "$add_warning\nTHIS IS THE FIRST WARNING OF POSSIBLY MANY - ONLY A SINGLE EMAIL IS SENT UNTIL THE WARNING(S) ARE ACKNOWLEDGED\n\nFor more detail check:\nTIMEWATCH hompage http://$host\nWarning log http://$host/ntpwarnings/\nLog files http://$host/ntplog/";
         print "\n  emailing warning $mail_warning\n";
         smtp_send($mail_warning);
-### add snmp trap send in here
+
+        # snmp trap sends $add_warning as the trap string
+        snmp_send($add_warning);
         return;
     }
 

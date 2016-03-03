@@ -104,9 +104,9 @@ print
 system 'crontab -l > cron_for_timewatch';
 
 system "echo '# Run ntpd to set clock 1 min before check script runs; 14,29,44,59' >> cron_for_timewatch";
-system "echo '14-59/15 * * * * /usr/sbin/ntpd -gqx  > /dev/null' >> cron_for_timewatch";
+system "echo '14-59/15 * * * * /usr/sbin/ntpd -gqx  >/dev/null 2>&1' >> cron_for_timewatch";
 system "echo '# Run check script every 15 mins on the hour' >> cron_for_timewatch";
-system "echo '*/15 * * * * /root/timewatch.pl > /dev/null' >> cron_for_timewatch";
+system "echo '*/15 * * * * /root/timewatch.pl >/dev/null 2>&1' >> cron_for_timewatch";
 system 'crontab cron_for_timewatch';
 
 my $hostname = hostname();
