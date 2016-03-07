@@ -126,11 +126,15 @@ delta = T(ABA) = (T4-T1) - (T3-T2)
 #### Identifying NTP services on the LAN
 Use nmap to scan for port 123 responses.  To identify domain controllers & active directory forests, it is possible to use nslookup from a client on the same Windows domain.  Check the Service Location (SRV) locator resource records for your_local_domain.com with the command below.  The SRV record is a Domain Name System (DNS) resource record that is used to identify servers hosting specific services, in this case ldap and ntp  
 
+From a Windows terminal run `nslookup` and try these example commands:   
 `nslookup`  
 ` > set type=all`  
-` >  _ldap._tcp.dc._msdcs.your_local_domain(s).com`  
+` >  _ldap._tcp.dc._msdcs.your_local_domain.com`  
 and   
-` > ntp._udp.your_local_domain(s).com`   
+` > ntp._udp.your_local_domain.com`   
+`exit` to quit.  To check an identified address responds to a time request   
+`w32tm /monitor /computers:192.168.0.1`   
+
  
 # Timewatch
 It would be nice to visualise the data.  InfluxDB + Grafana seem to be a nice match.
@@ -303,16 +307,6 @@ add ntpd to cron so it runs a minute or so before the check script, redirect std
 Stop the ntp service running on reboot with `sysv-rc-conf` (chkconfig is getting old). 
 Remove the logging from cron once it has been proven.
 The build scipt will stop ntpd and run this from cron but the suggested /etc/ntp.conf configuration change above is manual but can be left with the Ubuntu default.
-
-#### Finding NTP distribution via Active Directory
-
-From a Windows terminal run `nslookup` and try these example commands:   
-`> set type=all`    
-`> _ldap._tcp.dc._msdcs.yourdomain.com`  
-and   
-`_ntp._udp.yourdomain.com`   
-`exit` to quit.  To check an identified address responds to a time request   
-`w32tm /monitor /computers:192.168.0.1`
 
 # Timewatch 2
 
