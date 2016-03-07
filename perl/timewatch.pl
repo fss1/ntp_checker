@@ -27,7 +27,7 @@ use Mail::Mailer;                     # For smtp
 # can redistribute it and/or modify it
 # under the same terms as Perl 5.14.0.
 
-our $VERSION = '0.0.55';
+our $VERSION = '0.0.56';
 
 # *** SCRIPT TO POLL INTERNAL NTP SOURCES, CHECK RETURNED OFFSET (AGAINST NPL) AND LEAP INDICATOR ***
 # *** WARN IF ANY SOURCE IS OUTSIDE OFFSET LIMIT, UNAVAILABLE OR HAS THE LI SET ***
@@ -404,7 +404,7 @@ die "Only one argument allowed. Verbose -v or help -h\n" if @ARGV > 1;
 if ( !defined $ARGV[0] ) {
     $verbosity = '0';
     print
-"\n  $PROGRAM_NAME V$VERSION running at: $runtime[0] $runtime[1] \n  use -v for verbose, -h for help, -m for mail test\n\n";
+"\n  $PROGRAM_NAME V$VERSION running at: $runtime[0] $runtime[1] \n  use -v for verbose, -h for help, -m for mail test -s for snmp test\n\n";
 }
 
 if ( defined( $ARGV[0] ) && $ARGV[0] eq '-v' ) { $verbosity = '1'; }
