@@ -293,7 +293,7 @@ Manually sync with 'ntpd -gqx' (ntpdate is deprecated)
 
 add ntpd to cron so it runs a minute or so before the check script, redirect stderr to stderr 2>&1 to prevent default email from cron (stdout > dev/null does not catch stderr)
 
-`*/15 * * * * /root/timewatch.pl >/dev/null 2>&1`
+`*/15 * * * * /root/timewatch.pl >/dev/null 2>&1`  
 `14-59/15 * * * * /usr/sbin/ntpd -gqx >/dev/null 2>&1`  
 `# or this for debug`    
 `# 14-59/15 * * * * /usr/sbin/ntpd -gqx >> /root/ntpd_log.txt && date >> /root/ntpd_log.txt`    
@@ -303,6 +303,16 @@ add ntpd to cron so it runs a minute or so before the check script, redirect std
 Stop the ntp service running on reboot with `sysv-rc-conf` (chkconfig is getting old). 
 Remove the logging from cron once it has been proven.
 The build scipt will stop ntpd and run this from cron but the suggested /etc/ntp.conf configuration change above is manual but can be left with the Ubuntu default.
+
+#### Finding NTP distribution via Active Directory
+
+From a Windows terminal run `nslookup` and try these example commands:   
+`> set type=all`    
+`> _ldap._tcp.dc._msdcs.yourdomain.com`  
+and   
+`_ntp._udp.yourdomain.com`   
+`exit` to quit.  To check an identified address responds to a time request   
+`w32tm /monitor /computers:192.168.0.1`
 
 # Timewatch 2
 
@@ -332,7 +342,7 @@ To send a test trap from timewatch.pl set the destination parameters in the vari
 
 To send a trap from Ubuntu:    
 `snmptrap -v 1 -c public <trap_destination_ip> .1.3.6.1.4.1.16924.217 "" 6 666 "" .1.3.6.1.4.1.16924.237 s "allworkandnoplay..."`   
-A null """" applies the default value to firstly the agent address and secondly the timestamp in the above command.   
+A null `""` applies the default value to firstly the agent address and secondly the timestamp in the above command.   
 
 To trap to syslog on Ubuntu:  
 
