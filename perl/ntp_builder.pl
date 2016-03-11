@@ -19,7 +19,7 @@ use English qw(-no_match_vars);
 # This is a setup script for Ubuntu 64 bit server 12.04/14.04/15.04
 # intended for hosting the ntp_checker.pl script
 
-our $VERSION = '0.0.10';
+our $VERSION = '0.0.11';
 
 print << "GREETINGS";
    
@@ -34,6 +34,7 @@ GREETINGS
 
 # install hh command, hstr https://github.com/dvorka/hstr, bash search history on steroids
 print "\n Adding repository for hh\n";
+system 'apt-get install software-properties-common';
 system 'add-apt-repository ppa:ultradvorka/ppa';
 
 # to make this active, apt-get update at some point before install hh
