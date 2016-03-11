@@ -308,6 +308,22 @@ Stop the ntp service running on reboot with `sysv-rc-conf` (chkconfig is getting
 Remove the logging from cron once it has been proven.
 The build scipt will stop ntpd and run this from cron but the suggested /etc/ntp.conf configuration change above is manual but can be left with the Ubuntu default.
 
+Havin run ntpd from cron it was found that this gave more variation to the local clock than leaving ntpd running and did not give a 'smooth' clock when plotted.  
+
+A better approach may be to use npt-wait as a system call in the script, so the script will not run until the clock is synchronised.
+
+If synchronizing it will wait and not return  
+`# ntp-wait -v`   
+`Waiting for ntpd to synchronize...`   
+
+`# ntp-wait -v`   
+`Waiting for ntpd to synchronize... OK!`   
+
+`# ntp-wait -v`   
+`Waiting for ntpd to synchronize... ntpd is not running!`   
+
+if ntpd is not running ntp-wait returns immediately 
+
 # Timewatch 2
 
 More features were requested.  These will be added to 0.0.50 and higher:
