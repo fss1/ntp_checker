@@ -21,7 +21,7 @@ use Sys::Hostname;
 # intended for hosting  timewatch.pl script which evolved from nto_checker to support 
 # Influx/Grafana and became timewatch.pl
 
-our $VERSION = '0.0.09';
+our $VERSION = '0.0.10';
 
 # influxdb download
 my $influxdb_latest =  'https://s3.amazonaws.com/influxdb/influxdb_0.9.6.1_amd64.deb';
@@ -91,10 +91,11 @@ system 'apt-get install sysv-rc-conf';
 print "\n Installing sar to check system usage (sysstat package) \n";
 system 'apt-get install sysstat';
 
+# Attempting to run ntpd from cron gave poorer results than letting ntpd run continually:
 # stop the ntp service (and from booting) then set the clock
-print "\n Stopping ntp service and setting clock with ntpd -gqx\n";
-system 'update-rc.d ntp disable';
-system 'service ntp stop';
+# print "\n Stopping ntp service and setting clock with ntpd -gqx\n";
+# system 'update-rc.d ntp disable';
+# system 'service ntp stop';
 system 'ntpd -gqx';
 
 # edit crontab to provide execution of the timewatch script every 15 minutes
@@ -103,8 +104,9 @@ print
 
 system 'crontab -l > cron_for_timewatch';
 
-system "echo '# Run ntpd to set clock 1 min before check script runs; 14,29,44,59' >> cron_for_timewatch";
-system "echo '14-59/15 * * * * /usr/sbin/ntpd -gqx  >/dev/null 2>&1' >> cron_for_timewatch";
+# Attempting to run ntpd from cron gave poorer results than letting ntpd run continually:
+# system "echo '# Run ntpd to set clock 1 min before check script runs; 14,29,44,59' >> cron_for_timewatch";
+# system "echo '14-59/15 * * * * /usr/sbin/ntpd -gqx  >/dev/null 2>&1' >> cron_for_timewatch";
 system "echo '# Run check script every 15 mins on the hour' >> cron_for_timewatch";
 system "echo '*/15 * * * * /root/timewatch.pl >/dev/null 2>&1' >> cron_for_timewatch";
 system 'crontab cron_for_timewatch';
