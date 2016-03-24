@@ -27,7 +27,7 @@ use Mail::Mailer;                     # For smtp
 # can redistribute it and/or modify it
 # under the same terms as Perl 5.14.0.
 
-our $VERSION = '0.0.56';
+our $VERSION = '0.0.57';
 
 # *** SCRIPT TO POLL INTERNAL NTP SOURCES, CHECK RETURNED OFFSET (AGAINST NPL) AND LEAP INDICATOR ***
 # *** WARN IF ANY SOURCE IS OUTSIDE OFFSET LIMIT, UNAVAILABLE OR HAS THE LI SET ***
@@ -399,32 +399,12 @@ sub max_offset {
 
 # Check command line arguments
 
-die "Only one argument allowed. Verbose -v or help -h\n" if @ARGV > 1;
+die "Only one argument allowed. Use -h to see options\n" if @ARGV > 1;
 
 if ( !defined $ARGV[0] ) {
     $verbosity = '0';
     print
 "\n  $PROGRAM_NAME V$VERSION running at: $runtime[0] $runtime[1] \n  use -v for verbose, -h for help, -m for mail test -s for snmp test\n\n";
-}
-
-if ( defined( $ARGV[0] ) && $ARGV[0] eq '-v' ) { $verbosity = '1'; }
-
-if ( $verbosity eq '1' ) {
-    print << "HELLO";
-
-    ------------------------------------------------------------
-       $PROGRAM_NAME V$VERSION run at: $runtime[0] $runtime[1]
-    ------------------------------------------------------------
-       This script compares NTP sources listed in:
-             $ntplist
-       with:
-             $external_ref1 or $external_ref2
-       If the difference in offsets is more than $offset_limit seconds,
-       or a leap Indicator bit is set,
-       or the server does not repond, a WARNING is flagged.
-    ------------------------------------------------------------
-
-HELLO
 }
 
 # Create a help page
@@ -493,9 +473,12 @@ if ( defined( $ARGV[0] ) && $ARGV[0] eq '-h' ) {
     exit 0;
 }
 
+# if -v, set verbosity flag
+elsif ( defined( $ARGV[0] ) && $ARGV[0] eq '-v' ) { $verbosity = '1'; }
+
 # If ARGV -m send a test mail
 
-if ( defined( $ARGV[0] ) && $ARGV[0] eq '-m' ) {
+elsif ( defined( $ARGV[0] ) && $ARGV[0] eq '-m' ) {
     print "\n Sending test email to $mailto\n\n";
     my $testmessage =
 "This is a test message sent to $mailto via smtp relay at $mailaddress\n\nFor more detail check:\nTIMEWATCH homepage http://$host\nWarning log http://$host/ntpwarnings/\nLog files http://$host/ntplog/";
@@ -505,12 +488,37 @@ if ( defined( $ARGV[0] ) && $ARGV[0] eq '-m' ) {
 
 # If ARGV -s send a test trap
 
-if ( defined( $ARGV[0] ) && $ARGV[0] eq '-s' ) {
+elsif ( defined( $ARGV[0] ) && $ARGV[0] eq '-s' ) {
     print "\n Sending test trap to $snmp_host\n\n";
     my $snmp_warning =
 "This is a test trap from $PROGRAM_NAME version $VERSION sent to $snmp_host. Visit http://$host for more details";
     snmp_send($snmp_warning);
     exit 0;
+}
+
+# If ARGV defined but none of the above, dont run and print the unrecognised switch
+
+elsif   ( defined( $ARGV[0] )) {
+    print "\n That option was not recognised, use -h for vaid options\n\n";
+    exit 0;
+}
+
+if ( $verbosity eq '1' ) {
+    print << "HELLO";
+
+    ------------------------------------------------------------
+       $PROGRAM_NAME V$VERSION run at: $runtime[0] $runtime[1]
+    ------------------------------------------------------------
+       This script compares NTP sources listed in:
+             $ntplist
+       with:
+             $external_ref1 or $external_ref2
+       If the difference in offsets is more than $offset_limit seconds,
+       or a leap Indicator bit is set,
+       or the server does not repond, a WARNING is flagged.
+    ------------------------------------------------------------
+
+HELLO
 }
 
 # write the HELPHTML content to the $index file
@@ -662,6 +670,12 @@ my $pid;    # process id used for waitpid check
 
 # Fetch reference time and store offset in $ref_offset
 # If referecne clock cannot be identified, WARN and try the second external reference
+
+
+# Ensure ntpd is not currently synchronizing - wait until its synchronised with ntp-wait
+# ntp-wait will continue if ntpd is not running 
+system 'ntp-wait -v';
+
 print
 "\nFetching comparison time offset from National Physical Laboratory $external_ref1\n";
 eval { %response = get_ntp_response($external_ref1) }
