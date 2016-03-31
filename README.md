@@ -378,11 +378,11 @@ Now tail the log to see the output `tail -f /var/log/syslog`
 To refresh the home page an attempt was made at using the refresh meta tag within `<head>` and repeated at the document end. 
 Apparently there is/was a 64K buffer that must be filled before a page is cached in IE.  
 `<META HTTP-EQUIV="refresh" CONTENT="5">`   
-This worked for the usual *No Warnings* page but failed to refresh the *Warnings* page even with no-chase and expires meta tags added.
+This worked for the usual *No Warnings* page but failed to refresh the *Warnings* page even with `no-cach` and `Expires` meta tags added.   
 `<META HTTP-EQUIV="Pragma" CONTENT="no-cache">`
 `<META HTTP-EQUIV="Expires" CONTENT="-1">`
 `</head>`   
 
-The javascript alternative works and was added to 0.0.58
+The javascript alternative works and was added to 0.0.58   
 `<body onload="javascript:setTimeout(function(){ location.reload(); },5000);">`
 
