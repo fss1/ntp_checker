@@ -27,7 +27,7 @@ use Mail::Mailer;                     # For smtp
 # can redistribute it and/or modify it
 # under the same terms as Perl 5.14.0.
 
-our $VERSION = '0.0.57';
+our $VERSION = '0.0.58';
 
 # *** SCRIPT TO POLL INTERNAL NTP SOURCES, CHECK RETURNED OFFSET (AGAINST NPL) AND LEAP INDICATOR ***
 # *** WARN IF ANY SOURCE IS OUTSIDE OFFSET LIMIT, UNAVAILABLE OR HAS THE LI SET ***
@@ -1024,7 +1024,7 @@ sub create_index {
 <link rel="stylesheet" href="main.css" type="text/css" media="screen"/>
 </head>
 
-<body >
+<body onload="javascript:setTimeout(function(){ location.reload(); },5000);">
 <header>
 <hgroup>
 <br>
@@ -1077,7 +1077,6 @@ sub create_index {
 	        <input TYPE="button" VALUE="Graphical View"
 	        onclick="window.open('http://HOST:3000','_blank')"> </p>
                 </form>
-            <p class="next-to-aside"><br><mark>This static page and will not be updated until the next run</mark> </p>
                 <aside>
                 <p>
                 Clicking 'Acknowledge Warning' archives the current warning file and enables further email alerts</p>
@@ -1097,9 +1096,12 @@ sub create_index {
                     </ul>
                     </nav>
                     <footer>
-                    <p>This is a static page and needs to be reloaded after the script next runs to present the latest results.</p>
+                    <p>This page reloads every 5 seconds but only shows the status when Timewatch last ran</p>
 </footer>
 </body>
+<head>
+<link rel="stylesheet" href="main.css" type="text/css" media="screen"/>
+</head>
 </html>
 HTMLINDEX
     return $index_html;
