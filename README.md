@@ -137,9 +137,9 @@ and
 
  
 # Timewatch
-It would be nice to visualise the data.  InfluxDB + Grafana seem to be a nice match.
+It was decided to visualise the data.  InfluxDB + Grafana seem to be a nice match.
 ntp_checker above 0.0.37 gained influxDB integration to become Timewatch.  
-An additional build script timewatch_builder.pl, will add InfluxDB and Grafan and the database 'timewatch'.  
+The additional build script timewatch_builder.pl, will add InfluxDB and Grafan and the database 'timewatch'.  
 Graphs look better over an interval of days if data points are every 15 mins. A crontab entry for timewatch has been added for this (the ntp_checker was hourly).
 
 Interfaces:  
@@ -151,9 +151,19 @@ or the command line:
 \# /opt/influxdb/influx  
 Connected to http://localhost:8086 version  
 InfluxDB shell 0.9.x.x
->  
 
-Check out the query language specificaiton https://influxdb.com/docs/v0.9/query_language/spec.html   
+The script uses curl to make http inserts to InfluxDB - curl must be present.
+  
+
+**Grafana**
+http://localhost:3000/login
+[default login admin,admin]
+
+
+#### Influx configuration
+
+Check out the query language specificaiton https://influxdb.com/docs/v0.9/query_language/spec.html  
+The install script initialises Influx as required with the _timewatch_ database.    
 Be careful with keywords.  SERVER is a keyword and matches 'server' in a query if also used as a database key.  This still works but it is necessary to double quote "server" in a query string.   
  
 A few influx example queries and settings:  
@@ -187,37 +197,13 @@ To restore, `service influxd stop`, then `influxd restore -config /etc/influxdb/
     
 For plotting purposes, the external reference servers become a single plot with the same name defined in $ref_server.  
 
- 
-**Grafana**  
-http://localhost:3000/login  
-[default login admin,admin]  
-
-The script will use curl to make http inserts to InfluxDB so curl must be present.  
-
-In Grafana, edit the Data Source to be Type InfluxDB 0.9.x; as this is running on the same host, Http settings are url http://localhost:8086  
-Data source name is used by the dashboards to idenify the database, effectively an alias. For example, Name: influxdb_timewatch, Database  timewatch, User admin.     
-ADD ROW -> Add Panel -> Graph  with multiple lines such as 'SELECT mean(value) FROM ntp_offset WHERE server=ip_of_server GROUP BY time($interval) server'   
-
-#### NTP offset for Singlestat
-
-Within Grafana -> Add Panel -> Single stat -> Options it is possible to define colours to value ranges and a value to text mapping. 
-Use last value to provide a current condition.  SELECT last(value) FROME poffset WHERE server = ref_server GROUP BY time($interval) server  
-The ntp_offset is made always positive and added to the timewatch database as a separate row, poffset. 
-Suggested thresholds are set as 0,0.3,0.5 Colors as Green, Orange and Red.  
-Exception cases exist that can be identified by using text mapping for specific values.  
-If no response from the server is found then the offset is set to 666.
-If the leap indicator bit is set then the offset is set to 667.  
-The value 666 is mapped to display 'Not Available'  
-The value 667 is mapped to display 'LI Set'   
-
-#### Max Positive V Negative Offset 
-
-Another graph of max positive and negative offset was considered.  Additional entries were made in the database for measurement 'maxoffset' to provide 'maxpos_server' and 'maxneg_server' offset values each time the script is run.  
-This is taken from the internal server pool and excludes external references.  
-
 #### Grafana configuration
 
-This is down to personal taste; a few suggestions:  
+In Grafana, edit the Data Source to be Type InfluxDB 0.9.x; as this is running on the same host, Http settings are url `http://localhost:8086`
+Data source name is used by the dashboards to idenify the database, effectively an alias. For example, Name: `influxdb_timewatch`, Database  `timewatch`, User `admin`.
+ADD ROW -> Add Panel -> Graph  with multiple lines such as 'SELECT mean(value) FROM ntp_offset WHERE server=ip_of_server GROUP BY time($interval)
+
+A few suggestions:  
 
 + Row title allows the graph to be collapsed but looks cluttered if a graph title is also used.  Graph title can be blank (but remains as a hover over link to access the edit menu) 
 + Settings (the cog) -> Rows, allows title to be added. Settings -> Links are also very useful
@@ -230,6 +216,25 @@ This is down to personal taste; a few suggestions:
 + For single statistics, span 1, height 0 works provided the pre and post description is short and provides a minimal area
 + Metrics now allow 'ALIAS BY' instead of using the tag value to label the server
 + Change admin password and create a view only user, timewatch.  Grafana Admin -> Global Users -> Create User (and Edit admin account)
+
+
+**NTP offset for Singlestat**
+
+Within Grafana -> Add Panel -> Single stat -> Options it is possible to define colours to value ranges and a value to text mapping.
+Use last value to provide a current condition.  SELECT last(value) FROME poffset WHERE server = ref_server GROUP BY time($interval) server
+The ntp_offset is made always positive and added to the timewatch database as a separate row, poffset.
+Suggested thresholds are set as 0,0.3,0.5 Colors as Green, Orange and Red.
+Exception cases exist that can be identified by using text mapping for specific values.
+If no response from the server is found then the offset is set to 666.
+If the leap indicator bit is set then the offset is set to 667.
+The value 666 is mapped to display 'Not Available'
+The value 667 is mapped to display 'LI Set'
+
+
+**Max Positive V Negative Offset**
+
+Another graph of max positive and negative offset was considered.  Additional entries were made in the database for measurement 'maxoffset' to provide 'maxpos_server' and 'maxneg_server' offset values each time the script is run.
+This is taken from the internal server pool and excludes external references.
 
 #### Timewatch server administration
 The timewatch script is running on a VM with only 1G of RAM.  The build script adds `sar` but this is not enabled.  
