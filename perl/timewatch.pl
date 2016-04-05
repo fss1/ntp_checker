@@ -27,7 +27,7 @@ use Mail::Mailer;                     # For smtp
 # can redistribute it and/or modify it
 # under the same terms as Perl 5.14.0.
 
-our $VERSION = '0.0.58';
+our $VERSION = '0.0.59';
 
 # *** SCRIPT TO POLL INTERNAL NTP SOURCES, CHECK RETURNED OFFSET (AGAINST NPL) AND LEAP INDICATOR ***
 # *** WARN IF ANY SOURCE IS OUTSIDE OFFSET LIMIT, UNAVAILABLE OR HAS THE LI SET ***
@@ -498,7 +498,7 @@ elsif ( defined( $ARGV[0] ) && $ARGV[0] eq '-s' ) {
 
 # If ARGV defined but none of the above, dont run and print the unrecognised switch
 
-elsif   ( defined( $ARGV[0] )) {
+elsif ( defined( $ARGV[0] ) ) {
     print "\n That option was not recognised, use -h for vaid options\n\n";
     exit 0;
 }
@@ -671,9 +671,11 @@ my $pid;    # process id used for waitpid check
 # Fetch reference time and store offset in $ref_offset
 # If referecne clock cannot be identified, WARN and try the second external reference
 
+print
+"\nFetching comparison time offset from National Physical Laboratory $external_ref1\n";
 
 # Ensure ntpd is not currently synchronizing - wait until its synchronised with ntp-wait
-# ntp-wait will continue if ntpd is not running 
+# ntp-wait will continue if ntpd is not running.  -v is used here to print output to terminal
 system 'ntp-wait -v';
 
 print
@@ -840,6 +842,10 @@ foreach (@servers) {
 
     # Clear hash of any previous content before testing next server
     undef %response;
+
+# Ensure ntpd is not currently synchronizing - wait until its synchronised with ntp-wait
+    system 'ntp-wait';
+
     eval { %response = get_ntp_response($server) }
       or warn "No response from $server\n";
 

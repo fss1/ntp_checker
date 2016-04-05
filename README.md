@@ -313,10 +313,10 @@ Stop the ntp service running on reboot with `sysv-rc-conf` (chkconfig is getting
 Remove the logging from cron once it has been proven.
 Suggested /etc/ntp.conf configuration change above is manual but can be left with the Ubuntu default.
 
-When runing ntpd from cron, this was found to give more variation to the local clock than leaving ntpd running and did not give a *smooth* clock when plotted.  
+When running ntpd from cron, this was found to give more variation to the local clock than leaving ntpd running and did not give a *smooth* clock when plotted.  
 
 A better approach may be to use npt-wait as a system call in the script, so the script will wait if the clock is synchronised. 
-ntpd could still run during script execution but this is an acceptable edge case.
+ntpd could still synchronise during script execution, however running ntp-wait before each ntp request reduces this to an acceptable edge case.
 
 If synchronizing it will wait and not return  
 `# ntp-wait -v`   
@@ -328,7 +328,7 @@ If synchronizing it will wait and not return
 `# ntp-wait -v`   
 `Waiting for ntpd to synchronize... ntpd is not running!`   
 
-if ntpd is not running ntp-wait returns immediately 
+if ntpd is not running ntp-wait returns immediately.  When first used in the script -v is added to print to the terminal.  Subsequent use drops the verbose switch.
 
 # Timewatch 2
 
@@ -349,7 +349,7 @@ An additonal series, abs_offset has been added to the timewatch database.  This 
 
 #### SNMP Testing
 
-To recieve a trap on a Mac:   
+To receive a trap on a Mac:   
 create /etc/snmp/snmptrapd.conf and add`disableAuthorization yes`  
 `sudo snmptrapd -f -Lo`   
 
