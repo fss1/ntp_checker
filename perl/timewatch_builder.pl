@@ -21,7 +21,7 @@ use Sys::Hostname;
 # intended for hosting  timewatch.pl script which evolved from nto_checker to support 
 # Influx/Grafana and became timewatch.pl
 
-our $VERSION = '0.0.10';
+our $VERSION = '0.0.11';
 
 # influxdb download
 my $influxdb_latest =  'https://s3.amazonaws.com/influxdb/influxdb_0.9.6.1_amd64.deb';
@@ -44,6 +44,10 @@ system 'cpanm Net::SNMP';
 system 'apt-get install snmpd';
 # For snmptrap command:
 system 'apt-get install snmp';
+
+# INSTALL File::Slurp for reading last run warning file 
+print "\n Installing File::Slurp \n";
+system 'cpanm File::Slurp';
 
 # INSTALL INFLUXDB
 
