@@ -10,6 +10,7 @@ use Fcntl qw(:flock);
 use Sys::Hostname;
 use File::Copy;
 use Net::SNMP qw(:asn1);    # For snmp
+use File::Slurp;
 
 # Required none core modules
 use Net::NTP qw(get_ntp_response);    # For NTP
@@ -27,7 +28,7 @@ use Mail::Mailer;                     # For smtp
 # can redistribute it and/or modify it
 # under the same terms as Perl 5.14.0.
 
-our $VERSION = '0.0.59';
+our $VERSION = '0.0.60';
 
 # *** SCRIPT TO POLL INTERNAL NTP SOURCES, CHECK RETURNED OFFSET (AGAINST NPL) AND LEAP INDICATOR ***
 # *** WARN IF ANY SOURCE IS OUTSIDE OFFSET LIMIT, UNAVAILABLE OR HAS THE LI SET ***
@@ -181,6 +182,16 @@ flock DATA, LOCK_EX | LOCK_NB
 "This script $PROGRAM_NAME is already running.  All those moments will be lost in time, like tears in rain. Time to die";
 
 # Don't close the file handle until the program end. Critic will complain about file handles not closed quickly but in this case its necessary as a duplicate process check
+
+# Check for warning file from previous run
+# slurp last run warning if present, then delete it
+if ( -f 'warning_from_last_run.txt' ) {
+    my $warn_last = read_file('warning_from_last_run.txt');
+    unlink 'warning_from_last_run.txt'
+      or warn "\n  warning_from_last_run.txt could not be deleted\n";
+
+# print "\n Found warning_from_last_run.txt, read it, deleted it \n File contained: \n$warn_last \n\n";
+}
 
 # Create time stamp (seconds since Unix epoch):
 my $now = time;
@@ -583,6 +594,9 @@ sub warn_append {
     # read warning string passed to sub into add_warning
     my $add_warning = shift;
 
+    # Add this warning to the last_warning file
+    last_warning($add_warning);
+
     # if warning log does not exist, create it, include the header
     if ( !-f $warn_name_txt ) {
 
@@ -628,6 +642,24 @@ sub warn_append {
         close $WARN or carp "Unable to close $warn_name_txt\n";
         return;
     }
+}
+
+## sub to create or append to warning_from_last_run.txt ##
+
+sub last_warning {
+
+    my $last_warn = shift;
+
+    #  If this existed before the script ran it was deleted earlier
+
+# Open log last warning file for create or append
+# print "\n  about to create or append to warning_from_last_run file ....  \n\n";
+    open( my $LASTWARN, '>>', 'warning_from_last_run.txt' )
+      || carp "  can't open warning_from_last_run.txt file\n";
+
+    # now add the warning warning
+    exit 2 if !print {$LASTWARN} "$last_warn";
+    close $LASTWARN || warn "  Cannot close warning_from_last_run.txt \n";
 }
 
 ## sub to append to log file ##
@@ -727,6 +759,7 @@ if ( defined $response{'Reference Clock Identifier'} ) {
         warn_append(
 "$runtime[0] $runtime[1] external reference $external_ref1 is showing none zero LI = $response{'Leap Indicator'}\n"
         );
+
         $warning++;
     }
 
