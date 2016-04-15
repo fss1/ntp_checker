@@ -28,7 +28,7 @@ use Mail::Mailer;                     # For smtp
 # can redistribute it and/or modify it
 # under the same terms as Perl 5.14.0.
 
-our $VERSION = '0.0.60';
+our $VERSION = '0.0.61';
 
 # *** SCRIPT TO POLL INTERNAL NTP SOURCES, CHECK RETURNED OFFSET (AGAINST NPL) AND LEAP INDICATOR ***
 # *** WARN IF ANY SOURCE IS OUTSIDE OFFSET LIMIT, UNAVAILABLE OR HAS THE LI SET ***
@@ -173,6 +173,10 @@ my $verbosity = '0';
 # Array to hold influxDB insert values
 my @insert = ();
 
+# variable to hold last_run_badhosts.txt
+my $warn_last;
+undef $warn_last;
+
 # BEFORE WE BEGIN, go flock yourself ...
 ## ENSURE ONLY ONE VERSION OF THIS SCRIPT IS RUNING ##
 
@@ -185,12 +189,12 @@ flock DATA, LOCK_EX | LOCK_NB
 
 # Check for warning file from previous run
 # slurp last run warning if present, then delete it
-if ( -f 'warning_from_last_run.txt' ) {
-    my $warn_last = read_file('warning_from_last_run.txt');
-    unlink 'warning_from_last_run.txt'
-      or warn "\n  warning_from_last_run.txt could not be deleted\n";
+if ( -f 'last_run_badhosts.txt' ) {
+    $warn_last = read_file('last_run_badhosts.txt');
+    unlink 'last_run_badhosts.txt'
+      or warn "\n  last_run_badhosts.txt could not be deleted\n";
 
-# print "\n Found warning_from_last_run.txt, read it, deleted it \n File contained: \n$warn_last \n\n";
+# print "\n Found last_run_badhosts.txt, read it, deleted it \n File contained: \n$warn_last \n\n";
 }
 
 # Create time stamp (seconds since Unix epoch):
@@ -597,6 +601,10 @@ sub warn_append {
     # Add this warning to the last_warning file
     last_warning($add_warning);
 
+# ALERT behaviour starts here.
+# If no warining file (i.e new warning) and not in restricted list, and host previously raised warning on last run
+# THEN AND ONLY THEN - ALERT
+
     # if warning log does not exist, create it, include the header
     if ( !-f $warn_name_txt ) {
 
@@ -622,6 +630,23 @@ sub warn_append {
                 return;
             }
         }
+
+#  BADHOST
+# Only send alert if it is seen on two successive runs i.e. current warning is also last_run_badhosts.txt
+# if (defined $warn_last) {
+# read $warn_last into array and check each line (each bad host name) for a match with current warning
+#                 my @lines = split /\n/, $warn_last;
+#                 foreach my $badhost (@lines) {
+#                 # print "\n bad host is $badhost \n";
+#                 if ($add_warning =~ /$badhost/xsm){
+#                 print " \n host $badhost was in warning from last run - send an alert \n";
+#                           }
+#                      }
+#	         }
+#  Only alert if badhost present on two successive runs
+#  Rethinking this - add ALERT SENT to warining file.  Parse file before sending an alert to see if a previous alert was sent
+#  Change Previous warining present to include ALERT SENT <date>
+
         my $mail_warning =
 "$add_warning\nTHIS IS THE FIRST WARNING OF POSSIBLY MANY - ONLY A SINGLE EMAIL IS SENT UNTIL THE WARNING(S) ARE ACKNOWLEDGED\n\nFor more detail check:\nTIMEWATCH hompage http://$host\nWarning log http://$host/ntpwarnings/\nLog files http://$host/ntplog/";
         print "\n  emailing warning $mail_warning\n";
@@ -631,6 +656,8 @@ sub warn_append {
         snmp_send($add_warning);
         return;
     }
+
+    # end of if -f $warn_name_txt, ALERT routine
 
     # else append to warning log if it already exists (and dont email)
 
@@ -644,22 +671,25 @@ sub warn_append {
     }
 }
 
-## sub to create or append to warning_from_last_run.txt ##
+## sub to create or append to last_run_badhosts.txt ##
+# non greedy match of host name (between ><) is added to bad hosts file
 
 sub last_warning {
 
     my $last_warn = shift;
+    $last_warn =~ />(.*?)</xms;
 
+    # print "\n last waring is $last_warn host is: $1  \n\n";
     #  If this existed before the script ran it was deleted earlier
 
 # Open log last warning file for create or append
-# print "\n  about to create or append to warning_from_last_run file ....  \n\n";
-    open( my $LASTWARN, '>>', 'warning_from_last_run.txt' )
-      || carp "  can't open warning_from_last_run.txt file\n";
+# print "\n  about to create or append to last_run_badhosts.txt file ....  \n\n";
+    open( my $LASTWARN, '>>', 'last_run_badhosts.txt' )
+      || carp "  can't open last_run_badhosts.txt file\n";
 
-    # now add the warning warning
-    exit 2 if !print {$LASTWARN} "$last_warn";
-    close $LASTWARN || warn "  Cannot close warning_from_last_run.txt \n";
+    # now add the bad host found in the first match
+    exit 2 if !print {$LASTWARN} "$1\n";
+    close $LASTWARN || warn "  Cannot close last_run_badhosts.txt \n";
 }
 
 ## sub to append to log file ##
@@ -757,7 +787,7 @@ if ( defined $response{'Reference Clock Identifier'} ) {
 
         influx_single(@insert);
         warn_append(
-"$runtime[0] $runtime[1] external reference $external_ref1 is showing none zero LI = $response{'Leap Indicator'}\n"
+"$runtime[0] $runtime[1] external reference >$external_ref1< is showing none zero LI = $response{'Leap Indicator'}\n"
         );
 
         $warning++;
@@ -813,7 +843,7 @@ else {
 
             influx_single(@insert);
             warn_append(
-"$runtime[0] $runtime[1] external reference $external_ref2 is showing none zero LI = $response{'Leap Indicator'}\n"
+"$runtime[0] $runtime[1] external reference >$external_ref2< is showing none zero LI = $response{'Leap Indicator'}\n"
             );
             $warning++;
         }
@@ -833,7 +863,7 @@ else {
         influx_single(@insert);
 
         warn_append(
-"$runtime[0] $runtime[1] External server $external_ref1 & $external_ref2 did not respond with a reference clock\n"
+"$runtime[0] $runtime[1] External server >$external_ref1< & >$external_ref2< did not respond with a reference clock\n"
         );
         $warning++;
     }
@@ -925,7 +955,7 @@ foreach (@servers) {
 
             influx_single(@insert);
             warn_append(
-"$runtime[0] $runtime[1] Leap indicator for $server = $response{'Leap Indicator'} was detected\n"
+"$runtime[0] $runtime[1] Leap indicator for >$server< = $response{'Leap Indicator'} was detected\n"
             );
             $warning++;
         }
@@ -957,7 +987,7 @@ foreach (@servers) {
 "  *** WARNING absolute offset difference for $server from external ref is $abs_diff and > $offset_limit limit setting ***\n"
             );
             warn_append(
-"$runtime[0] $runtime[1] absolute offset difference for $server from external ref is $abs_diff and >  $offset_limit limit setting ***\n"
+"$runtime[0] $runtime[1] absolute offset difference for >$server< from external ref is $abs_diff and >  $offset_limit limit setting ***\n"
             );
             $warning++;
         }
@@ -977,7 +1007,7 @@ foreach (@servers) {
         influx_single(@insert);
 
         warn_append(
-"$runtime[0] $runtime[1] Server $server did not respond with a reference clock\n"
+"$runtime[0] $runtime[1] Server >$server< did not respond with a reference clock\n"
         );
         $warning++;
     }

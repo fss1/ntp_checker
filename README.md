@@ -391,8 +391,8 @@ This worked for the usual *No Warnings* page but failed to refresh the *Warnings
 The javascript alternative works and was added to 0.0.58   
 `<body onload="javascript:setTimeout(function(){ location.reload(); },5000);">`
 
-### Restricting alerts by requiring two successive warnings for the same server
+#### Restricting alerts by requiring two successive warnings for the same server
 
-It was found that on just an odd occasion a server may not respond.  By creating a warning_from_last_run file, state from the previous check can be maintained.  The name string was modified for easy regex `>server_name_or_IP<` as this could be hostname or IP and could have been incorrectly formatted in the server list.  Alerts will only be sent if the same server name errors on two successive runs.
+It was found that on odd occasions a server, or the network, may not respond.  By creating a last_run_badhosts.txt file (0.0.61), state from the previous check can be maintained.  The name string was modified for easy regex `>server_name_or_IP<` as this could be hostname or IP and could have been incorrectly formatted in the server list.  In a future release, alerts will only be sent if the same server name errors on two successive runs.  The alert send event will be added to the warnings log.  Parsing the warnings log will be used to check if an alert has already been sent.  Previous Warnings Exist page will be modified to add alert status.
 
 
