@@ -394,6 +394,6 @@ The javascript alternative works and was added to 0.0.58
 
 #### Restricting alerts by requiring two successive warnings for the same server
 
-It was found that on odd occasions a server, or the network, may not respond.  By creating a last_run_badhosts.txt file (0.0.61), state from the previous check can be maintained.  The name string was modified for easy regex `>server_name_or_IP<` as this could be hostname or IP and could have been incorrectly formatted in the server list.  In a future release, alerts will only be sent if the same server name errors on two successive runs.  The alert send event will be added to the warnings log.  Parsing the warnings log will be used to check if an alert has already been sent.  Previous Warnings Exist page will be modified to add alert status.
+It was found that on odd occasions a server, or the network, may not respond.  By creating a last_run_badhosts.txt file (0.0.61), state from the previous check can be maintained.  The name string was modified for easy regex `>server_name_or_IP<` as this could be hostname or IP and could have been incorrectly formatted in the server list.  In (0.0.64), alerts are only be sent if the same server name errors on two successive runs.  The alert send event is added to the warnings log.  Parsing the warnings log is used to check if an alert has already been sent.  In the future, the previous Warnings Exist page might be modified to add alert status.
 
 
