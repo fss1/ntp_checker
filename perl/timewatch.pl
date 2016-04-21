@@ -28,7 +28,7 @@ use Mail::Mailer;                     # For smtp
 # can redistribute it and/or modify it
 # under the same terms as Perl 5.14.0.
 
-our $VERSION = '0.0.61';
+our $VERSION = '0.0.64';
 
 # *** SCRIPT TO POLL INTERNAL NTP SOURCES, CHECK RETURNED OFFSET (AGAINST NPL) AND LEAP INDICATOR ***
 # *** WARN IF ANY SOURCE IS OUTSIDE OFFSET LIMIT, UNAVAILABLE OR HAS THE LI SET ***
@@ -40,7 +40,8 @@ our $VERSION = '0.0.61';
 
 # SMTP SERVER/RELAY - email alert relay & addresses
 my $mailaddress = 'your_company_email_relay';
-my $mailto      = 'alerts@domain.com';
+
+my $mailto = 'alerts@domain.com';
 
 # $mailcc will take comma separate multiple addresses.  'reports@domain.com, support@domain.com'
 my $mailcc = 'support@domain.com';
@@ -605,11 +606,11 @@ sub warn_append {
 # If no warining file (i.e new warning) and not in restricted list, and host previously raised warning on last run
 # THEN AND ONLY THEN - ALERT
 
-    # if warning log does not exist, create it, include the header
+# if warning log does not exist, create it, include the header, else just append $add_warning
     if ( !-f $warn_name_txt ) {
 
-        # print "\n $warn_name_txt did not exist so adding header\n";
-        # Open log file for write - print an opening header to the file:
+     # print "\n $warn_name_txt did not exist so adding header, then warning\n";
+     # Open log file for write - print an opening header to the file:
         open( my $WARN, '>', "$warn_name_txt" )
           || carp "can't open file $warn_name_txt\n";
         print $WARN
@@ -618,56 +619,99 @@ sub warn_append {
         # now add the warning to the header
         exit 2 if !print {$WARN} "$add_warning";
         close $WARN || warn "Cannot close $warn_name_txt\n";
-
-# email this warning here so it is only sent when the warning log file is first created
-# check warning does not contain any servers (or other matching patterns) from the restricted servers list
-# retrun if match is found, without sending email
-        foreach (@restricted) {
-            my $restrict = $_;
-            if ( $add_warning =~ /\Q$restrict\E/ ) {
-                print
-"  *** $restrict is in the restricted list - no email was sent\n";
-                return;
-            }
-        }
-
-#  BADHOST
-# Only send alert if it is seen on two successive runs i.e. current warning is also last_run_badhosts.txt
-# if (defined $warn_last) {
-# read $warn_last into array and check each line (each bad host name) for a match with current warning
-#                 my @lines = split /\n/, $warn_last;
-#                 foreach my $badhost (@lines) {
-#                 # print "\n bad host is $badhost \n";
-#                 if ($add_warning =~ /$badhost/xsm){
-#                 print " \n host $badhost was in warning from last run - send an alert \n";
-#                           }
-#                      }
-#	         }
-#  Only alert if badhost present on two successive runs
-#  Rethinking this - add ALERT SENT to warining file.  Parse file before sending an alert to see if a previous alert was sent
-#  Change Previous warining present to include ALERT SENT <date>
-
-        my $mail_warning =
-"$add_warning\nTHIS IS THE FIRST WARNING OF POSSIBLY MANY - ONLY A SINGLE EMAIL IS SENT UNTIL THE WARNING(S) ARE ACKNOWLEDGED\n\nFor more detail check:\nTIMEWATCH hompage http://$host\nWarning log http://$host/ntpwarnings/\nLog files http://$host/ntplog/";
-        print "\n  emailing warning $mail_warning\n";
-        smtp_send($mail_warning);
-
-        # snmp trap sends $add_warning as the trap string
-        snmp_send($add_warning);
-        return;
     }
-
-    # end of if -f $warn_name_txt, ALERT routine
-
-    # else append to warning log if it already exists (and dont email)
-
     else {
+        # print "\n Appending entry to warning file\n";
         open my $WARN, '>>', "$warn_name_txt"
           || carp "can't open file $warn_name_txt\n";
 
         exit 2 if !print {$WARN} "$add_warning";
         close $WARN or carp "Unable to close $warn_name_txt\n";
-        return;
+    }
+
+# email this warning here so it is only sent when the warning log file is first created
+# check warning does not contain any servers (or other matching patterns) from the restricted servers list
+# retrun if match is found, without sending email
+# print "\n checking restricted list \n";
+    foreach (@restricted) {
+        my $restrict = $_;
+        if ( $add_warning =~ /\Q$restrict\E/ ) {
+            print
+              "  *** $restrict is in the restricted list - no email was sent\n";
+            return;
+        }
+    }
+
+    # end of foreach (@restricted)
+
+    # print "\n about to check for bad hosts.... \n";
+
+#  BADHOST
+# Only send alert if it is seen on two successive runs i.e. current warning is also last_run_badhosts.txt
+    if ( defined $warn_last ) {
+
+# read $warn_last into array and check each line (each bad host name) for a match with current warning
+        my @lines = split /\n/, $warn_last;
+        foreach my $badhost (@lines) {
+
+            # print "  bad host is $badhost \n";
+            if ( $add_warning =~ /$badhost/xsm ) {
+
+                # Check if warning file already contains an alert
+                my $alert = alert_test();
+
+                # print "\n Return is $alert\n";
+                if ( $alert > 0 ) {
+
+         # print "\n There is an Alert in that file, so not sending another!\n";
+                    return;
+                }
+                else {
+### ALERT ###
+
+                    my $mail_warning =
+"$add_warning\nTHIS IS THE FIRST WARNING OF POSSIBLY MANY - ONLY A SINGLE EMAIL IS SENT UNTIL THE WARNING(S) ARE ACKNOWLEDGED\nALERTS ARE ONLY SENT IF THE SAME HOST ERRORS ON TWO SUCCESSIVE TESTS\n\nFor more detail check:\nTIMEWATCH hompage http://$host\nWarning log http://$host/ntpwarnings/\nLog files http://$host/ntplog/";
+                    print "\n  emailing warning $mail_warning\n";
+                    smtp_send($mail_warning);
+
+                    # snmp trap sends $add_warning as the trap string
+                    snmp_send($add_warning);
+                    open my $APPWARN, '>>', "$warn_name_txt"
+                      || carp "can't open file $warn_name_txt\n";
+
+                    exit 2 if !print {$APPWARN} "***Alert has been sent***\n";
+                    close $APPWARN or carp "Unable to close $warn_name_txt\n";
+                    return;
+                }
+
+                # end of else, ALERT
+            }    # end of if $add_warning matches $hadhost
+        }    # end of for each badhost
+    }    # end of if definded $warn_last
+}    # end of sub warn
+
+## sub to check warning file for an ***Alert message
+# returns 1 if warning file exists and ***Alert string found
+
+sub alert_test {
+    if ( !-f $warn_name_txt ) { return 0; }
+    else {
+        # print "\n $warn_name_txt exists, check if Alert has been sent\n";
+        # Open log file for read and parse for ***Alert
+        open( my $WARN, '<', "$warn_name_txt" )
+          || carp "can't open file $warn_name_txt\n";
+
+        # $| =1;
+        while (<$WARN>) {
+            chomp;
+
+            # print "printing > $_\n";
+            if ( $_ =~ /\*\*\*Alert.*/xsm ) {
+                return 1;
+            }
+        }
+        close $WARN or carp "Unable to close $warn_name_txt\n";
+        return 0;
     }
 }
 
@@ -1126,7 +1170,7 @@ sub create_index {
         <header>
         <h1>How it works</h1>
         </header>
-        <p>This script runs every 15 minutes.  Normally there should be no warnings.  If a warning event is detected, a warnings only log is created &amp appended to on each successive run.  Servers used for offset comparison are:
+        <p>This script runs every 15 minutes.  Normally there should be no warnings.  If a warning event is detected, a warnings only log is created &amp appended to on each successive run.  Bad host are recorded and an alert is only issued if the same host is bad for two successive runs.  Servers used for offset comparison are:
             <br>EXTERNALREF1
             <br>EXTERNALREF2
             <br>The secondary server will only be used if the primary server is not responding.</p>
