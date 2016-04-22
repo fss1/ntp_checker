@@ -28,7 +28,7 @@ use Mail::Mailer;                     # For smtp
 # can redistribute it and/or modify it
 # under the same terms as Perl 5.14.0.
 
-our $VERSION = '0.0.64';
+our $VERSION = '0.0.65';
 
 # *** SCRIPT TO POLL INTERNAL NTP SOURCES, CHECK RETURNED OFFSET (AGAINST NPL) AND LEAP INDICATOR ***
 # *** WARN IF ANY SOURCE IS OUTSIDE OFFSET LIMIT, UNAVAILABLE OR HAS THE LI SET ***
@@ -1114,7 +1114,7 @@ if ( $warning > 0 ) {
 }
 
 # If $warning 0 BUT a historic warning file exists then result is still a warning
-# until the warning file is deleted - otherwise result is no warnings on this run
+# until the warning file is deleted. If warning file contains an alert, this should be flagged
 if ( $warning == 0 ) {
     if ( -f $warn_name_txt ) {
         $results = "PREVIOUS WARNINGS PRESENT";
@@ -1122,6 +1122,12 @@ if ( $warning == 0 ) {
     else {
         $results = "No warnings on $runtime[0] at $runtime[1]";
     }
+
+    # However if there is an alert in the warning file
+    if ( alert_test() ) {
+        $results = "PREVIOUS WARNINGS PRESENT - Alert sent";
+    }
+
     print "   \n*** End of test, no warnings detected *** \n\n";
     log_append(
 "\n\n --- End of log $runtime[0] $runtime[1], no warnings detected ---  \n"
@@ -1170,7 +1176,7 @@ sub create_index {
         <header>
         <h1>How it works</h1>
         </header>
-        <p>This script runs every 15 minutes.  Normally there should be no warnings.  If a warning event is detected, a warnings only log is created &amp appended to on each successive run.  Bad host are recorded and an alert is only issued if the same host is bad for two successive runs.  Servers used for offset comparison are:
+        <p>This script runs every 15 minutes.  Normally there should be no warnings.  If a warning event is detected, a warnings only log is created &amp appended to on each successive run.  Bad host are recorded - an alert is only issued if the same host is bad for two successive runs.  Servers used for offset comparison are:
             <br>EXTERNALREF1
             <br>EXTERNALREF2
             <br>The secondary server will only be used if the primary server is not responding.</p>
@@ -1182,7 +1188,7 @@ sub create_index {
             <p class="next-to-aside">
             Alerting can be prevented for <a href="RESTRICTEDLIST" target="_blank">selected servers</a>.   
             A new warning will create a warning log file and send an email/SNMP alert. A warning condition exists while a current warning file is present.<br>
-            No alerts are sent for further warnings but these are appended to the current warning log.<br>
+            An alert event is added to the warning log.  No further alerts are sent while a warning log containing an alert event exists.<br>
             The warning file is automatically renamed with a date stamp if older than 7 days. Acknowledging the warning date stamps the file name. Once date stamped, the warning file is effectively archived.
             <br>For a graphical view, log into Grafana (port 3000) with user and password 'timewatch' 
             </p>
