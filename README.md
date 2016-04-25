@@ -157,8 +157,10 @@ The script uses curl to make http inserts to InfluxDB - curl must be present.
 
 **Grafana**
 http://localhost:3000/login
-[default login admin,admin]
+[default login admin,admin]   
 
+Grafana 2.6 works with Influx 0.9 but not fully with 0.10 flavour   
+Grafana 3.0 is beta (April 2016) and should work with 0.10, 0.11 - not tried this yet   
 
 #### Influx configuration
 

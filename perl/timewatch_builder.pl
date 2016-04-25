@@ -23,6 +23,9 @@ use Sys::Hostname;
 
 our $VERSION = '0.0.11';
 
+# Grafana 2.6 works with Influx 0.9 but not fully with 0.10 flavour
+# Grafana 3.0 is beta (April 2016) and should work with 0.10, 0.11 - not tried this yet
+
 # influxdb download
 my $influxdb_latest =  'https://s3.amazonaws.com/influxdb/influxdb_0.9.6.1_amd64.deb';
 
