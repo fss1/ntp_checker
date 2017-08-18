@@ -1,0 +1,29 @@
+# PERMITTED REFERENCE CLOCK(S) EXAMPLE FILE
+
+# Define permitted reference clock or clocks for a given time source here
+# If active, the contents of this file should show in the log
+
+# Format rules:
+# Lines beginning with a hash are comments
+# Blank lines or lines beginning with a space are ignored
+# Lists are comma separated
+# First item at start of line is the NTP source address, no leading spaces
+# Subsequent items are the premitted reference clock addresses for the source
+# For example:
+# ntp.source.address, permitted.ref.1, permitted.ref.2, etc.etc.etc
+
+# VIPs
+192.168.0.1, 192.168.0.100, 192.168.0.101, 192.168.0.102, 192.168.0.103
+192.168.0.2, 192.168.0.100, 192.168.0.101, 192.168.0.102, 192.168.0.103
+192.168.0.3, 192.168.0.100, 192.168.0.101, 192.168.0.102, 192.168.0.103
+192.168.0.4, 192.168.0.100, 192.168.0.101, 192.168.0.102, 192.168.0.103
+
+# TIME SERVERS
+192.168.0.10, 10.0.0.1, 10.0.0.2, 10.0.0.3
+192.168.0.11, 10.0.0.1, 10.0.0.2, 10.0.0.3
+192.168.0.12, MRS
+192.168.0.99, 10.1.1.1, 10.1.1.2, 10.1.1.3, 10.1.1.4
+
+# Yesterday I was clever, so I wanted to change the world 
+# Today I am wise, so I am changing myself
+# Rumi
