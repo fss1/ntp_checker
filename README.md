@@ -62,7 +62,7 @@ The internal_ntp_servers_list.txt file must be present in the same path as the c
 `# Please ensure each server address begins at the beginning of a new line`  
 `# Lines beginning with hash or space are treated as comment lines`  
 
-` Your internal NTP sources`
+`# Your internal NTP sources`
 `10.0.0.1`  
 `10.0.0.2`  
 `10.0.0.3`  
@@ -398,4 +398,9 @@ The javascript alternative works and was added to 0.0.58
 
 It was found that on odd occasions a server, or the network, may not respond.  By creating a last_run_badhosts.txt file (0.0.61), state from the previous check can be maintained.  The name string was modified for easy regex `>server_name_or_IP<` as this could be hostname or IP and could have been incorrectly formatted in the server list.  In (0.0.64), alerts are only be sent if the same server name errors on two successive runs.  The alert send event is added to the warnings log.  Parsing the warnings log is used to check if an alert has already been sent.  The Previous Warnings Exist page shows if an alert was sent.
 
+### Monitoring Reference Clocks ###
 
+An additional requirement was made to check the reference clock of the NTP source and compare this to a list of permitted clock addresses.  This configuration is defined in the permitted_ref_clocks.txt file.  The format is:   
+`ntp.source.address, permitted.ref.1, permitted.ref.2`   
+If this file is present, future versions (above 0.0.65) should check the reference sources are permitted.   
+ 
