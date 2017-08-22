@@ -319,6 +319,7 @@ Suggested /etc/ntp.conf configuration change above is manual but can be left wit
 When running ntpd from cron, this was found to give more variation to the local clock than leaving ntpd running and did not give a *smooth* clock when plotted.  
 
 A better approach may be to use npt-wait as a system call in the script, so the script will wait if the clock is synchronised. 
+ntp-wait is part of the ntp servivce (necessary for the ntp_checker to work and installed with apt-get install ntp). 
 ntpd could still synchronise during script execution, however running ntp-wait before each ntp request reduces this to an acceptable edge case.
 
 If synchronizing it will wait and not return  
@@ -402,5 +403,5 @@ It was found that on odd occasions a server, or the network, may not respond.  B
 
 An additional requirement was made to check the reference clock of the NTP source and compare this to a list of permitted clock addresses.  This configuration is defined in the permitted_ref_clocks.txt file.  The format is:   
 `ntp.source.address, permitted.ref.1, permitted.ref.2`   
-If this file is present, future versions (above 0.0.65) should check the reference sources are permitted.   
+If this file is present, future versions (above 0.0.65) should check the reference sources are permitted.  A test script, permitted.pl was written to read the permitted_ref_clocks file and place the contents in a hash of arrays and generate the log file entry.      
  
