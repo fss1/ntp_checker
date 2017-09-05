@@ -28,7 +28,7 @@ use Mail::Mailer;                     # For smtp
 # can redistribute it and/or modify it
 # under the same terms as Perl 5.14.0.
 
-our $VERSION = '0.0.65';
+our $VERSION = '0.0.72';
 
 # *** SCRIPT TO POLL INTERNAL NTP SOURCES, CHECK RETURNED OFFSET (AGAINST NPL) AND LEAP INDICATOR ***
 # *** WARN IF ANY SOURCE IS OUTSIDE OFFSET LIMIT, UNAVAILABLE OR HAS THE LI SET ***
@@ -39,7 +39,7 @@ our $VERSION = '0.0.65';
 # e.g.  "\/home\/user\/$filename" or use single quotes if no variable involved '/home/user/';
 
 # SMTP SERVER/RELAY - email alert relay & addresses
-my $mailaddress = 'your_company_email_relay';
+my $mailaddress = '10.1.2.3';
 
 my $mailto = 'alerts@domain.com';
 
@@ -69,9 +69,14 @@ my $ntplist = 'internal_ntp_servers_list.txt';
 # Logs will still be created. Web page will still show warning state - just no email
 my $ntp_restrict = 'restricted_ntp_servers.txt';
 
+# File name and path for permitted reference clocks file
+# Permitted ref clocks: 1st entry is NTP source followed by ref addresses
+# If this file is not found, ref clocks will not be checked
+my $permitted_refs_file = 'permitted_ref_clocks.txt';
+
 # name for log files (as required date_stamp.txt extension will be created/appended)
-my $logname   = 'ntp_test_log';
-my $warn_name = 'ntp_warn_log';
+my $logname   = 'delme_ntp_test_log';
+my $warn_name = 'delme_ntp_warn_log';
 
 # name for web link to log files
 my $weblogto  = 'ntplog';
@@ -177,6 +182,15 @@ my @insert = ();
 # variable to hold last_run_badhosts.txt
 my $warn_last;
 undef $warn_last;
+
+# Pointer to hash of permitted ref clocks
+my $prc_ref;
+
+# Pointer deref to hash of arrays for permitted ref clocks
+my %prcs;
+
+# Log file entry to add list of permitted ref clocks to log
+my $prclog_entry;
 
 # BEFORE WE BEGIN, go flock yourself ...
 ## ENSURE ONLY ONE VERSION OF THIS SCRIPT IS RUNING ##
@@ -413,6 +427,60 @@ sub max_offset {
 
 # end of max_ offset sub
 
+## SUB TO READ PRC PERMITTED REF CLOCKS FILE ##
+# Takes filename as input, returns pointer to hash of arrays and log header entry
+sub read_prc {
+    my $permitted_refs = shift;
+    my @permitted;    # Array to hold permitted refs from file
+
+    # Log entry defining permitted reference clocks
+    my $prclog =
+"\n*** Permitted ref clocks: 1st entry is NTP source followed by ref addresses ***                                                                                                           **\n";
+
+    # Permitted ref clock hash of arrays will be
+    my %prc;
+
+    open my $PERMITTED, '<', "$permitted_refs"
+      or warn
+"Permitted reference file $permitted_refs wont open, check this file & patch exi                                                                                                             sts: $!";
+
+    while (<$PERMITTED>) {
+        $_ =~ s/\r?\n$//xms;
+        next
+          if ( $_ =~ m/^\s+/xms )
+          || ( $_ =~ m/^\#+/xms )
+          || ( $_ =~ m/^\s*$/xms );
+        @permitted = split( ',', $_ );
+
+        #     print  "NTP source is $permitted[0]\n";
+        $prclog .= "   @permitted\n";
+
+        # shift 1st array item into $ntp_source and use as hash key
+        my $ntp_src = shift @permitted;
+
+        # syntax for hash of arrays is push(@{$hash{$key}}, $insert_val);
+        push( @{ $prc{$ntp_src} }, @permitted );
+
+    }
+    close $PERMITTED or warn "restricted file list wont close: S!";
+
+    #  Enable this section for subroutine debug
+    #  print "\n$prclog\n";
+    #  print Dumper ( \%prc );
+    #  my $ntp_src;
+    #  foreach $ntp_src ( keys %prc ) {
+    #      print "NTP sorce is: $ntp_src reference clocks are:\n";
+    #      foreach ( @{ $prc{$ntp_src} } ) {
+    #          print "   $_\n";
+    #      }
+    #  }
+    return ( \%prc, $prclog );
+}
+
+# End of reading permitted ref clocks file sub
+
+### THE PROGRAM ###
+
 # Check command line arguments
 
 die "Only one argument allowed. Use -h to see options\n" if @ARGV > 1;
@@ -422,6 +490,37 @@ if ( !defined $ARGV[0] ) {
     print
 "\n  $PROGRAM_NAME V$VERSION running at: $runtime[0] $runtime[1] \n  use -v for verbose, -h for help, -m for mail test -s for snmp test\n\n";
 }
+
+# Read permissive reference clock file (if it exists)
+
+# If permitted_refs file exists, read file, return hash and log additions
+if ( -f $permitted_refs_file ) {
+
+# Pointer to permitted ref clock hash $prc_ref; prc log file entry $prclog_entry
+
+    ( $prc_ref, $prclog_entry ) = read_prc($permitted_refs_file);
+
+    # deref hash into hash for permitted ref clocks
+    %prcs = %{$prc_ref};
+
+    #    Enable lines below for debug
+    #    print Dumper ( \%prcs );
+    #    print "\nAddition to log file is:\n$prclog_entry\n";
+
+    # my $ntp_srcs;
+    #        foreach $ntp_srcs (sort  (keys %prcs) ) {
+    #            print "NTP sorce is: $ntp_srcs reference clocks are:\n";
+    #            foreach ( @{ $prcs{$ntp_srcs} } ) {
+    #                print "   $_\n";
+    #            }
+    #        }
+}
+else {
+    print
+"\n  $permitted_refs_file could not be found - ref clock check will be skipped\n";
+}
+
+# End of checking permissive clocks file, test success with if (%prcs) or if ($prclog_entry)
 
 # Create a help page
 
@@ -451,6 +550,8 @@ my $help = << "HELP";
        with:
              $external_ref1 or $external_ref2
        When run, this script generates a log file.
+       Additional checking of permitted reference clocks is possible
+       if these are defined in $permitted_refs_file
        If the difference in offsets is more than $offset_limit seconds,
        or a leap Indicator bit is set,
        or the server does not respond, a WARNING is logged.
@@ -582,6 +683,10 @@ copy( "$ntplist", "/var/www/$ntplist" ) or carp("copy of $ntplist failed");
 copy( "$ntp_restrict", "/var/www/$ntp_restrict" )
   or carp("no restrict file found $ntp_restrict");
 
+# copy reference clocks file, for access via web gui
+copy( "$permitted_refs_file", "/var/www/$permitted_refs_file" )
+  or carp("copy of $permitted_refs_file failed");
+
 # Create a log name with the path and time stamp
 $logname = $logto . $logname . '_' . $runtime[2] . '.txt';
 
@@ -592,6 +697,14 @@ print $LOG
 "\n  --- START OF LOG created by $PROGRAM_NAME V$VERSION from host $host ---\n  --- $runtime[0] $runtime[1] ---\n  --- External reference used is $external_ref1 or $external_ref2 ---\n  --- Warning flagged if offset difference is > $offset_limit sec between external ref and internal server query ---  \n";
 
 close $LOG || die "Cannot close $logname\n";
+
+# Append permissive reference clocks info to log file if $prclog_entry has been made
+if ($prclog_entry) {
+    open( my $LOG, '>>', "$logname" )
+      || die "can't open file $logname\n";
+    print $LOG "$prclog_entry";
+    close $LOG || die "Cannot close $logname\n";
+}
 
 ## sub routing to create a single warning log, email only the first  and append (but no email) if the log already exists ##
 sub warn_append {
@@ -670,7 +783,7 @@ sub warn_append {
 ### ALERT ###
 
                     my $mail_warning =
-"$add_warning\nTHIS IS THE FIRST WARNING OF POSSIBLY MANY - ONLY A SINGLE EMAIL IS SENT UNTIL THE WARNING(S) ARE ACKNOWLEDGED\nALERTS ARE ONLY SENT IF THE SAME HOST ERRORS ON TWO SUCCESSIVE TESTS\n\nFor more detail check:\nTIMEWATCH hompage http://$host\nWarning log http://$host/ntpwarnings/\nLog files http://$host/ntplog/";
+"$add_warning\nTHIS IS THE FIRST WARNING OF POSSIBLY MANY - ONLY A SINGLE EMAIL IS SENT UNTIL THE WARNING(S) ARE ACKNOWLEDGED\nALERTS ARE ONLY SENT IF THE SAME HOST ERRORS ON TWO SUCCESSIVE TESTS\n\nFor more detail check:\nTIMEWATCH home page http://$host\nWarning log http://$host/ntpwarnings/\nLog files http://$host/ntplog/";
                     print "\n  emailing warning $mail_warning\n";
                     smtp_send($mail_warning);
 
@@ -963,6 +1076,50 @@ foreach (@servers) {
 "Server $server: Ref $response{'Reference Clock Identifier'}, St $response{Stratum}, Li $response{'Leap Indicator'}, Precision $response{Precision}, Offset $response{Offset}, Delay $response{Delay}";
         print "$ntp_info\n";
 
+# if permitted refs loaded, check refs here but only if current NTP server matched one in the list
+
+        if (%prcs) {
+            foreach ( keys %prcs ) {
+
+               # Does $server match one of the keys in the hash of arrays (refs)
+                if ( $server =~ m/^$_$/xms ) {
+                    print
+"($server is a candidate for the permitted reference clocks check)\n";
+
+                    my $ref_ok = 0;
+                    my $next_ref;
+                    foreach $next_ref ( @{ $prcs{$server} } ) {
+
+#   print "next ref for $server is $next_ref, ref clock found: $response{'Reference Clock Identifier'}\n";
+                        if ( $response{'Reference Clock Identifier'} =~
+                            m/$next_ref/xsm )
+                        {
+                            $ref_ok++;
+                        }
+
+                    }
+
+                    if ( $ref_ok eq 0 ) {
+                        print
+                          "***  No permitted ref clock for $server found ***\n";
+                        log_append(
+"***  No permitted ref clock for $server found ***\n"
+                        );
+                        warn_append(
+"***  No permitted ref clock for >$server< found ***\n"
+                        );
+                        $warning++;
+                    }
+
+                }
+
+                # end of if server matches one in list
+
+            }
+        }
+
+        #end of if server matches one in prs list
+
 # print
 # "Server $server: Ref $response{'Reference Clock Identifier'}, St $response{Stratum}, Li $response{'Leap Indicator'}, Precision $response{Precision}, Offset $response{Offset}, Delay $response{Delay}\n";
         log_append("$ntp_info\n");
@@ -1171,7 +1328,7 @@ sub create_index {
     <h1>RESULTS</h1>
     </header>
     <p> &nbsp </p>
-    <p>This script compares <a href="SERVERLIST" target="_blank">internal NTP sources</a> with the National Physical Laboratory and warns if the offset between NPL and local servers exceeds OFFSETLIMIT seconds.  If NPL is not available, Physikalisch-Technische Bundesanstalt (PTB) is used.  A log file is created each time the script runs.  Logs older than 28 days are automatically deleted. View the Log or Warning Files directory by clicking on the navigation bar above or below. Times shown are in UTC.</p>
+    <p>This script compares <a href="SERVERLIST" target="_blank">internal NTP sources</a> with the National Physical Laboratory and warns if the offset between NPL and local servers exceeds OFFSETLIMIT seconds.  If NPL is not available, Physikalisch-Technische Bundesanstalt (PTB) is used.  Further checking of permissive reference clocks is made when <a href="PERMITTED" target="_blank">permitted references</a> are provided.  A log file is created each time the script runs.  Logs older than 28 days are automatically deleted. View the Log or Warning Files directory by clicking on the navigation bar above or below. Times shown are in UTC.</p>
        <section>
         <header>
         <h1>How it works</h1>
@@ -1350,6 +1507,7 @@ my $index_content = create_index();
 $index_content =~ s/RESULTS/$results/;
 $index_content =~ s/SERVERLIST/$ntplist/;
 $index_content =~ s/RESTRICTEDLIST/$ntp_restrict/;
+$index_content =~ s/PERMITTED/$permitted_refs_file/;
 $index_content =~ s/LOGTO/$weblogto/g;
 $index_content =~ s/WARNTO/$webwarnto/g;
 $index_content =~ s/EXTERNALREF1/$external_ref1/;
