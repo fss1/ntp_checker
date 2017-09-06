@@ -401,7 +401,7 @@ It was found that on odd occasions a server, or the network, may not respond.  B
 
 ### Monitoring Reference Clocks ###
 
-An additional requirement was made to check the reference clock of the NTP source and compare this to a list of permitted clock addresses.  This configuration is defined in the permitted_ref_clocks.txt file.  The format is:   
+A request was made (July 2017) to check the reference clock of the NTP source and compare this to a list of permitted clock addresses.  This configuration is defined in the permitted_ref_clocks.txt file.  The format is:   
 `ntp.source.address, permitted.ref.1, permitted.ref.2`   
-If this file is present, future versions (above 0.0.65) should check the reference sources are permitted.  A test script, permitted.pl was written to read the permitted_ref_clocks file and place the contents in a hash of arrays and generate the log file entry.      
+Simply edit the example provided and place in the same folder as the timewatch script. If this file is present, future versions of timewatch above 0.0.65 will check the reference clock sources are permitted.  The log file created on each run now shows the reference clock list used in the header	.  A test script, permitted.pl was written to read the permitted_ref_clocks file and place the contents in a hash of arrays; this became a sub-routine within timewatch.  The alerting behaviour described above is present for reference clock alerts.  i.e. a warning for the same source must be present on two successive runs of the script to send and alert.      
  
