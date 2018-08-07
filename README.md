@@ -207,7 +207,8 @@ ADD ROW -> Add Panel -> Graph  with multiple lines such as 'SELECT mean(value) F
 
 A few suggestions:  
 
-+ Row title allows the graph to be collapsed but looks cluttered if a graph title is also used.  Graph title can be blank (but remains as a hover over link to access the edit menu) 
++ Row title allows the graph to be collapsed but looks cluttered if a graph title is also used.  Graph title can be blank but remains as a hover over link directly below the row title, 
+to access the edit menu (wait for the hand to appear then click for menu). 
 + Settings (the cog) -> Rows, allows title to be added. Settings -> Links are also very useful
 + For each dashboard, time (X axis) can be _utc_ or _browser_.  This is selected for each dashboard via the Manage Dashboard cog -> Settings -> Timezone.  Time should be displayed as utc - beware that the Grafana default is _browser_   
 + The period configuration (top left) allows auto refresh to be defined (1 min seems sensible) change from default of off
