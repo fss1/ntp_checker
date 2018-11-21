@@ -21,7 +21,7 @@ use Sys::Hostname;
 # intended for hosting  timewatch.pl script which evolved from nto_checker to support 
 # Influx/Grafana and became timewatch.pl
 
-our $VERSION = '0.0.11';
+our $VERSION = '0.0.12';
 
 # Grafana 2.6 works with Influx 0.9 but not fully with 0.10 flavour
 # Grafana 3.0 is beta (April 2016) and should work with 0.10, 0.11 - not tried this yet
@@ -47,6 +47,12 @@ system 'cpanm Net::SNMP';
 system 'apt-get install snmpd';
 # For snmptrap command:
 system 'apt-get install snmp';
+
+# For NTP analysis
+system 'cpanm Net::NTP';
+
+# For email
+system 'cpanm Mail::Mailer';
 
 # INSTALL File::Slurp for reading last run warning file 
 print "\n Installing File::Slurp \n";
