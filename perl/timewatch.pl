@@ -28,7 +28,7 @@ use Mail::Mailer;                     # For smtp
 # can redistribute it and/or modify it
 # under the same terms as Perl 5.14.0.
 
-our $VERSION = '0.0.72';
+our $VERSION = '0.0.73';
 
 # *** SCRIPT TO POLL INTERNAL NTP SOURCES, CHECK RETURNED OFFSET (AGAINST NPL) AND LEAP INDICATOR ***
 # *** WARN IF ANY SOURCE IS OUTSIDE OFFSET LIMIT, UNAVAILABLE OR HAS THE LI SET ***
@@ -41,10 +41,9 @@ our $VERSION = '0.0.72';
 # SMTP SERVER/RELAY - email alert relay & addresses
 my $mailaddress = '10.1.2.3';
 
-my $mailto = 'alerts@domain.com';
-
-# $mailcc will take comma separate multiple addresses.  'reports@domain.com, support@domain.com'
-my $mailcc = 'support@domain.com';
+# Email address list for alterts
+my @mailto_list =
+  qw(first.address@domain.com second.address@domain.com third.address@domain.com);
 
 # SNMP trap configuations
 # SNMP HOST.  Define the snmp trap destination
@@ -273,32 +272,33 @@ sub smtp_send {
 # Changing this only works for mails received after the setting change.
 # Creating an indent by adding 3 or more spaces to the beginning of each line stops Outlook stripping the \n
     $the_message =~ s/^/   /gxms;
+    foreach my $mailto (@mailto_list) {
+        my $mailer = Mail::Mailer->new(
+            'smtp',
+            Server  => $mailaddress,
+            Timeout => 20,
+        );    # Net::SMTP default timeout is 120 - too long for a LAN server
 
-    my $mailer = Mail::Mailer->new(
-        'smtp',
-        Server  => $mailaddress,
-        Timeout => 20,
-    );    # Net::SMTP default timeout is 120 - too long for a LAN server
+# Cc did not take comma separate multiple addresses.  'Cc' => 'test@domain.com, support@domain.com' did not work.  Note its 'Cc' not cc
+# The 'From' string can be any text  but unknown/invalid domains may be filtered and end up in junk mail or rejected
 
-# Cc will take comma separate multiple addresses.  'Cc' => 'test@domain.com, support@domain.com' Note that $mailer wont accept 'cc' must be Cc
-
-    # eval required to trap no connection error or script will die
-    eval {
-        $mailer->open(
-            {
-                'From'    => 'Timewatch<do_not_reply@notnownotever>',
-                'To'      => $mailto,
-                'Cc'      => $mailcc,
-                'Subject' => "NTP warning from $host"
-            }
-        );
-        1;
-    } or ( return $ERRNO );
-    print {$mailer} "$the_message\n"
-      || croak 'Message send failed';
-    print {$mailer} "\n   ---------- End of Message ----------\n"
-      || croak 'Message end failed';
-    $mailer->close();
+        # eval required to trap no connection error or script will die
+        eval {
+            $mailer->open(
+                {
+                    'From'    => 'Timewatch<do_not_reply@yourdomain.com>',
+                    'To'      => $mailto,
+                    'Subject' => "NTP warning from $host"
+                }
+            );
+            1;
+        } or ( return $ERRNO );
+        print {$mailer} "$the_message\n"
+          || croak 'Message send failed';
+        print {$mailer} "\n   ---------- End of Message ----------\n"
+          || croak 'Message end failed';
+        $mailer->close();
+    }    # end of foreach mailto_list
     return 0;
 
 }
@@ -596,9 +596,9 @@ elsif ( defined( $ARGV[0] ) && $ARGV[0] eq '-v' ) { $verbosity = '1'; }
 # If ARGV -m send a test mail
 
 elsif ( defined( $ARGV[0] ) && $ARGV[0] eq '-m' ) {
-    print "\n Sending test email to $mailto\n\n";
+    print "\n Sending test email to @mailto_list\n\n";
     my $testmessage =
-"This is a test message sent to $mailto via smtp relay at $mailaddress\n\nFor more detail check:\nTIMEWATCH homepage http://$host\nWarning log http://$host/ntpwarnings/\nLog files http://$host/ntplog/";
+"This is a test message sent to:\n@mailto_list\nvia smtp relay at $mailaddress\n\nFor more detail check:\nTIMEWATCH homepage http://$host\nWarning log http://$host/ntpwarnings/\nLog files http://$host/ntplog/";
     smtp_send($testmessage);
     exit 0;
 }
